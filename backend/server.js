@@ -51,10 +51,10 @@ function authenticateJWT(req, res, next) {
 
 // Register a new user
 app.post('/register', async (req, res) => {
-    const { username, password, ticket } = req.body;
+    const { username, password } = req.body;
 
-    if (!username || !password || !ticket) {
-        return res.status(400).json({ message: 'Username, password, and ticket are required' });
+    if (!username || !password) {
+        return res.status(400).json({ message: 'Username and password are required' });
     }
 
     try {
@@ -62,8 +62,8 @@ app.post('/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Insert user into the database
-        const query = 'INSERT INTO users (username, password, ticket) VALUES (?, ?, ?)';
-        db.query(query, [username, hashedPassword, ticket], (err, result) => {
+        const query = 'INSERT INTO users (username, password) VALUES (?, ?)';
+        db.query(query, [username, hashedPassword], (err, result) => {
             if (err) {
                 return res.status(500).json({ message: 'Error registering user', error: err });
             }
@@ -108,12 +108,36 @@ app.post('/login', (req, res) => {
     });
 });
 
-// user ticket - secured
+// get ticket info for current user
 app.get('/data', authenticateJWT, (req, res) => {
     const username = req.user.username;  // Username from the decoded JWT
 
-    // Find user in the database
-    const query = 'SELECT ticket FROM users WHERE username = ?';
+    // Find the user's ticket
+    const query = 'SELECT ticket FROM tickets INNER JOIN users ON tickets.user_id = users.id WHERE users.username = ?';
+    db.query(query, [username], (err, results) => {
+        if (err) {
+            return res.status(500).json({ message: 'Database error', error: err });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'No ticket found for this user' });
+        }
+
+        res.json({ ticket: results[0].ticket });
+    });
+});
+
+// add ticket by current user
+app.post('/ticket', authenticateJWT, (req, res) => {
+    const { ticket } = req.body;
+    const username = req.user.username; // Username from the decoded JWT
+
+    if (!ticket) {
+        return res.status(400).json({ message: 'Ticket information is required' });
+    }
+
+    // Find user by username to get user_id
+    const query = 'SELECT id FROM users WHERE username = ?';
     db.query(query, [username], (err, results) => {
         if (err) {
             return res.status(500).json({ message: 'Database error', error: err });
@@ -123,15 +147,24 @@ app.get('/data', authenticateJWT, (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Return the user's ticket info
-        res.json({ ticket: results[0].ticket });
+        const userId = results[0].id;
+
+        // Insert the ticket into the tickets table
+        const ticketQuery = 'INSERT INTO tickets (user_id, ticket) VALUES (?, ?)';
+        db.query(ticketQuery, [userId, ticket], (err, result) => {
+            if (err) {
+                return res.status(500).json({ message: 'Error adding ticket', error: err });
+            }
+
+            res.status(201).json({ message: 'Ticket added successfully' });
+        });
     });
 });
 
 // all users - secured
 app.get('/users', authenticateJWT, (req, res) => {
     // Fetch all users (username and ticket)
-    const query = 'SELECT username, ticket FROM users';
+    const query = 'SELECT username FROM users';
     db.query(query, (err, results) => {
         if (err) {
             return res.status(500).json({ message: 'Database error', error: err });

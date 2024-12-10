@@ -32,6 +32,23 @@ function generateToken(username) {
     return jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '1h' });
 }
 
+// JWT Authentication Middleware
+function authenticateJWT(req, res, next) {
+    const token = req.header('Authorization')?.replace('Bearer ', ''); // Extract token from Authorization header
+
+    if (!token) {
+        return res.status(401).json({ message: 'Access denied. No token provided.' });
+    }
+
+    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+        if (err) {
+            return res.status(403).json({ message: 'Invalid token.' });
+        }
+        req.user = user; // Attach decoded user to the request object
+        next();
+    });
+}
+
 // Register a new user
 app.post('/register', async (req, res) => {
     const { username, password, ticket } = req.body;
@@ -91,13 +108,35 @@ app.post('/login', (req, res) => {
     });
 });
 
-// Get all users
-app.get('/users', (req, res) => {
+// user ticket - secured
+app.get('/data', authenticateJWT, (req, res) => {
+    const username = req.user.username;  // Username from the decoded JWT
+
+    // Find user in the database
+    const query = 'SELECT ticket FROM users WHERE username = ?';
+    db.query(query, [username], (err, results) => {
+        if (err) {
+            return res.status(500).json({ message: 'Database error', error: err });
+        }
+
+        if (results.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Return the user's ticket info
+        res.json({ ticket: results[0].ticket });
+    });
+});
+
+// all users - secured
+app.get('/users', authenticateJWT, (req, res) => {
+    // Fetch all users (username and ticket)
     const query = 'SELECT username, ticket FROM users';
     db.query(query, (err, results) => {
         if (err) {
             return res.status(500).json({ message: 'Database error', error: err });
         }
+
         res.json(results);
     });
 });

@@ -7,7 +7,7 @@ export default function Login() {
     const [token, setToken] = useState("");
 
     function handleSubmit(e) {
-        e.preventDefault();
+        e.preventDefault(); // this blocks the default behavior as we don't want to reload or go somewhere else
         fetch("http://localhost:3000/login", {
             method: 'post',
             headers: {
@@ -20,6 +20,8 @@ export default function Login() {
         })
         .then(response => response.json())
         .then(data => {
+
+            // if logged successfully we then get token in a data object which we then store in localstorage
             console.log(data);
             console.log(data.token);
             setToken(data.token);

@@ -3,6 +3,7 @@ const mysql = require('mysql2');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
+const cors = require('cors');
 
 // Load environment variables
 dotenv.config();
@@ -12,6 +13,7 @@ const port = 3000;
 
 // Middleware to parse JSON requests
 app.use(express.json());
+app.use(cors());
 
 // Create MySQL connection
 const db = mysql.createConnection({

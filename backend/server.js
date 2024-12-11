@@ -162,8 +162,11 @@ app.get('/data', authenticateJWT, (req, res) => {
         if (results.length === 0) {
             return res.status(404).json({ message: 'No ticket found for this user' });
         }
+        
+        const tickets = results.map(row => row.ticket);
 
-        res.json({ ticket: results[0].ticket });
+        // Return the list of tickets
+        res.json({ tickets });
     });
 });
 

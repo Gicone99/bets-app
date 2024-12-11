@@ -1,0 +1,44 @@
+GET http://localhost:3000/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFsZXgiLCJpYXQiOjE3MzM5MTAwNjEsImV4cCI6MTczMzkxMzY2MX0.ivGQxWw401qPvb0UvSB35Zr5lHHwgQjAv-LxtOEYdjM
+
+###
+
+POST http://localhost:3000/logout
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFsZXgiLCJpYXQiOjE3MzM5MTAwNjEsImV4cCI6MTczMzkxMzY2MX0.ivGQxWw401qPvb0UvSB35Zr5lHHwgQjAv-LxtOEYdjM
+
+###
+
+POST http://localhost:3000/register
+content-type: application/json
+
+{
+    "username": "alex",
+    "password": "alex123",
+    "ticket": "B365-999"
+}
+
+###
+
+POST http://localhost:3000/login
+content-type: application/json
+
+{
+    "username": "alex",
+    "password": "alex123"
+}
+
+###
+
+GET http://localhost:3000/data
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFsZXgiLCJpYXQiOjE3MzM5MTU3OTYsImV4cCI6MTczMzkxOTM5Nn0.ktCrs27hkhDrRI25ETNNak1lWZXmxZbpV0kf5JfTFUE
+
+###
+
+POST http://localhost:3000/ticket
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFsZXgiLCJpYXQiOjE3MzM4MzUyNzMsImV4cCI6MTczMzgzODg3M30.dQ_TJHKyC7KFCcNiHBTryDI1iz6A8dcAkmN6rSMdDxE
+
+{
+    "ticket": "B365-999"
+}

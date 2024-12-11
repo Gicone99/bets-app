@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const moment = require('moment');
 
 // Load environment variables
 dotenv.config();
@@ -42,12 +43,25 @@ function authenticateJWT(req, res, next) {
         return res.status(401).json({ message: 'Access denied. No token provided.' });
     }
 
+    // Verify the JWT token
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
         if (err) {
             return res.status(403).json({ message: 'Invalid token.' });
         }
-        req.user = user; // Attach decoded user to the request object
-        next();
+
+        // Check if the token exists in the sessions table and is not expired
+        const query = 'SELECT * FROM sessions WHERE token = ? AND expires_at > NOW()';
+        db.query(query, [token], (err, results) => {
+            if (err) {
+                return res.status(500).json({ message: 'Error verifying token', error: err });
+            }
+            if (results.length === 0) {
+                return res.status(403).json({ message: 'Token is invalid or expired.' });
+            }
+
+            req.user = user; // Attach decoded user to the request object
+            next();
+        });
     });
 }
 
@@ -106,7 +120,31 @@ app.post('/login', (req, res) => {
         // Generate JWT token
         const token = generateToken(user.username);
 
-        res.json({ message: 'Login successful', token });
+        // Store the token in the sessions table with an expiration timestamp
+        const expiresAt = moment().add(1, 'hour').format('YYYY-MM-DD HH:mm:ss'); // Expiry time set to 1 hour from now
+        const sessionQuery = 'INSERT INTO sessions (user_id, token, expires_at) VALUES (?, ?, ?)';
+        db.query(sessionQuery, [user.id, token, expiresAt], (err, result) => {
+            if (err) {
+                return res.status(500).json({ message: 'Error storing session', error: err });
+            }
+
+            res.json({ message: 'Login successful', token });
+        });
+    });
+});
+
+// Log out the user (invalidate the token)
+app.post('/logout', authenticateJWT, (req, res) => {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+
+    // Delete the token from the sessions table to invalidate it
+    const query = 'DELETE FROM sessions WHERE token = ?';
+    db.query(query, [token], (err, result) => {
+        if (err) {
+            return res.status(500).json({ message: 'Error logging out', error: err });
+        }
+
+        res.json({ message: 'Logged out successfully' });
     });
 });
 

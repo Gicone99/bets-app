@@ -1,5 +1,4 @@
-import { useState } from "react";
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   TextField,
@@ -7,6 +6,7 @@ import {
   Typography,
   Paper,
   Divider,
+  Alert,
 } from "@mui/material";
 import { styled } from "@mui/system";
 
@@ -43,9 +43,10 @@ const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [token, setToken] = useState("");
+  const [error, setError] = useState(false);
 
-  function handleSubmit(e) {
-    e.preventDefault(); // this blocks the default behavior as we don't want to reload or go somewhere else
+  const handleSubmit = (e) => {
+    e.preventDefault();
     fetch("http://localhost:3000/login", {
       method: "post",
       headers: {
@@ -56,67 +57,98 @@ const Login = () => {
         password: password,
       }),
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Invalid credentials");
+        }
+        return response.json();
+      })
       .then((data) => {
-        // if logged successfully we then get token in a data object which we then store in localstorage
-        console.log(data);
-        console.log(data.token);
         setToken(data.token);
-        console.log(token);
         localStorage.setItem("token", data.token);
+        setError(false);
+      })
+      .catch(() => {
+        setError(true);
       });
-  }
+  };
+
+  React.useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   return (
     <>
       {token ? <p>Token: {localStorage.getItem("token")}</p> : <p>No token</p>}
       <Background>
-        <LoginContainer>
-          <Typography variant="h4" gutterBottom>
-            Login to Bet App
-          </Typography>
-          <Typography variant="body1" gutterBottom>
-            Enter your credentials below to continue.
-          </Typography>
-          <Divider sx={{ marginY: 2 }} />
-          <Box
-            component="form"
-            onSubmit={handleSubmit}
-            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-          >
-            <TextField
-              label="Username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              fullWidth
-              variant="outlined"
-              required
-              InputProps={{ style: { color: "#fff" } }}
-              InputLabelProps={{ style: { color: "#bbb" } }}
-            />
-            <TextField
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              fullWidth
-              variant="outlined"
-              required
-              InputProps={{ style: { color: "#fff" } }}
-              InputLabelProps={{ style: { color: "#bbb" } }}
-            />
-            <LoginButton type="submit" fullWidth>
-              Login
-            </LoginButton>
-          </Box>
-          <Typography variant="body2" sx={{ marginTop: 2, color: "#bbb" }}>
-            Don’t have an account?{" "}
-            <a href="/register" style={{ color: "#4CAF50" }}>
-              Sign up
-            </a>
-          </Typography>
-        </LoginContainer>
+        <Box sx={{ textAlign: "center" }}>
+          <LoginContainer>
+            <Typography variant="h4" gutterBottom>
+              Login to Bet App
+            </Typography>
+            <Typography variant="body1" gutterBottom>
+              Enter your credentials below to continue.
+            </Typography>
+            <Divider sx={{ marginY: 2 }} />
+            <Box
+              component="form"
+              onSubmit={handleSubmit}
+              sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+            >
+              <TextField
+                label="Username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                fullWidth
+                variant="outlined"
+                required
+                InputProps={{ style: { color: "#fff" } }}
+                InputLabelProps={{ style: { color: "#bbb" } }}
+              />
+              <TextField
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                fullWidth
+                variant="outlined"
+                required
+                InputProps={{ style: { color: "#fff" } }}
+                InputLabelProps={{ style: { color: "#bbb" } }}
+              />
+              <LoginButton type="submit" fullWidth>
+                Login
+              </LoginButton>
+            </Box>
+            <Typography variant="body2" sx={{ marginTop: 2, color: "#bbb" }}>
+              Don’t have an account?{" "}
+              <a href="/register" style={{ color: "#4CAF50" }}>
+                Sign up
+              </a>
+            </Typography>
+          </LoginContainer>
+          {error && (
+            <Box
+              sx={{
+                marginTop: 2,
+                maxWidth: 400,
+                marginX: "auto",
+                textAlign: "center",
+              }}
+            >
+              <Alert severity="error" onClose={() => setError(false)}>
+                <Typography sx={{ fontWeight: "bold", marginBottom: 0.5 }}>
+                  Invalid username or password.
+                </Typography>
+                <Typography variant="body1"> Please try again.</Typography>
+              </Alert>
+            </Box>
+          )}
+        </Box>
       </Background>
     </>
   );

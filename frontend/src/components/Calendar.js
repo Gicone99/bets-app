@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { FaEdit, FaTrash } from "react-icons/fa";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd"; // Importăm bibliotecile necesare pentru drag-and-drop
 
 const Calendar = () => {
   const [cardsByDate, setCardsByDate] = useState({});
@@ -8,10 +7,14 @@ const Calendar = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [newCardTitle, setNewCardTitle] = useState("");
   const [taskInputs, setTaskInputs] = useState({});
-  const [editingCard, setEditingCard] = useState(null); // For updating cards
-  const [editingTask, setEditingTask] = useState({}); // For updating tasks
+  const [taskCotes, setTaskCotes] = useState({});
+  const [editingCard, setEditingCard] = useState(null);
+  const [editingTask, setEditingTask] = useState({
+    cardId: null,
+    taskIndex: null,
+    newTaskName: "",
+  });
 
-  // 1. Încărcăm datele din localStorage atunci când componenta se încarcă
   useEffect(() => {
     const storedCards = JSON.parse(localStorage.getItem("cardsByDate"));
     if (storedCards) {
@@ -19,7 +22,6 @@ const Calendar = () => {
     }
   }, []);
 
-  // 2. Salvăm datele în localStorage atunci când cardsByDate se schimbă
   useEffect(() => {
     if (Object.keys(cardsByDate).length > 0) {
       localStorage.setItem("cardsByDate", JSON.stringify(cardsByDate));
@@ -54,6 +56,7 @@ const Calendar = () => {
       id: Date.now().toString(),
       title: newCardTitle,
       tasks: [],
+      status: "pending", // Statusul inițial al cardului
     };
 
     setCardsByDate((prev) => ({
@@ -85,13 +88,30 @@ const Calendar = () => {
     setTaskInputs((prev) => ({ ...prev, [cardId]: value }));
   };
 
+  const handleTaskCoteChange = (cardId, taskIndex, value) => {
+    value = value.replace(",", ".");
+    if (isNaN(value) || parseFloat(value) < 0) {
+      return;
+    }
+
+    setTaskCotes((prev) => ({
+      ...prev,
+      [cardId]: {
+        ...prev[cardId],
+        [taskIndex]: parseFloat(value),
+      },
+    }));
+  };
+
   const addTaskToCard = (cardId) => {
     const task = taskInputs[cardId]?.trim();
     if (!task) return;
 
     setCardsByDate((prev) => {
       const updatedCards = (prev[selectedDate] || []).map((card) =>
-        card.id === cardId ? { ...card, tasks: [...card.tasks, task] } : card
+        card.id === cardId
+          ? { ...card, tasks: [...card.tasks, { task, status: "pending" }] }
+          : card
       );
       return { ...prev, [selectedDate]: updatedCards };
     });
@@ -111,23 +131,61 @@ const Calendar = () => {
       );
       return { ...prev, [selectedDate]: updatedCards };
     });
+
+    setTaskCotes((prev) => {
+      const updatedCotes = { ...prev };
+      delete updatedCotes[cardId][taskIndex];
+      return updatedCotes;
+    });
   };
 
-  const updateTask = (cardId, taskIndex, updatedTask) => {
+  const updateTaskStatus = (cardId, taskIndex, status) => {
     setCardsByDate((prev) => {
       const updatedCards = (prev[selectedDate] || []).map((card) =>
         card.id === cardId
           ? {
               ...card,
               tasks: card.tasks.map((task, index) =>
-                index === taskIndex ? updatedTask : task
+                index === taskIndex ? { ...task, status } : task
               ),
             }
           : card
       );
       return { ...prev, [selectedDate]: updatedCards };
     });
-    setEditingTask({});
+  };
+
+  const updateTaskName = (cardId, taskIndex) => {
+    setCardsByDate((prev) => {
+      const updatedCards = (prev[selectedDate] || []).map((card) =>
+        card.id === cardId
+          ? {
+              ...card,
+              tasks: card.tasks.map((task, index) =>
+                index === taskIndex
+                  ? { ...task, task: editingTask.newTaskName }
+                  : task
+              ),
+            }
+          : card
+      );
+      return { ...prev, [selectedDate]: updatedCards };
+    });
+    setEditingTask({ cardId: null, taskIndex: null, newTaskName: "" });
+  };
+
+  const calculateTotalCote = (cardId) => {
+    const tasksCotes = taskCotes[cardId] || {};
+    return Object.values(tasksCotes).reduce((total, cote) => total * cote, 1);
+  };
+
+  const calculateCardStatus = (tasks) => {
+    const hasLost = tasks.some((task) => task.status === "lost");
+    const allWon = tasks.every((task) => task.status === "won");
+
+    if (hasLost) return "lost";
+    if (allWon) return "won";
+    return "pending";
   };
 
   const goToPreviousMonth = () => {
@@ -146,48 +204,6 @@ const Calendar = () => {
 
   const hasCards = (date) => {
     return (cardsByDate[date] || []).length > 0;
-  };
-
-  // Funcția care se ocupă de reorganizarea cardurilor
-  const onDragEnd = (result) => {
-    const { destination, source } = result;
-
-    // Dacă nu există o destinație, ieșim
-    if (!destination) return;
-
-    // Dacă cardul rămâne pe aceeași poziție, nu facem nimic
-    if (
-      destination.index === source.index &&
-      destination.droppableId === source.droppableId
-    )
-      return;
-
-    const sourceDate = source.droppableId;
-    const destinationDate = destination.droppableId;
-
-    // Mutăm cardul între zile (dacă sunt diferite)
-    if (sourceDate !== destinationDate) {
-      const sourceCards = Array.from(cardsByDate[sourceDate]);
-      const [removed] = sourceCards.splice(source.index, 1);
-      const destinationCards = Array.from(cardsByDate[destinationDate] || []);
-      destinationCards.splice(destination.index, 0, removed);
-
-      setCardsByDate((prev) => ({
-        ...prev,
-        [sourceDate]: sourceCards,
-        [destinationDate]: destinationCards,
-      }));
-    } else {
-      // Reorganizăm cardurile în aceeași zi
-      const updatedCards = Array.from(cardsByDate[sourceDate]);
-      const [removed] = updatedCards.splice(source.index, 1);
-      updatedCards.splice(destination.index, 0, removed); // Mutăm cardul la noua poziție
-
-      setCardsByDate((prev) => ({
-        ...prev,
-        [sourceDate]: updatedCards,
-      }));
-    }
   };
 
   return (
@@ -228,15 +244,11 @@ const Calendar = () => {
         {generateDays().map((date, index) => (
           <div
             key={index}
-            onClick={() => date && setSelectedDate(date)} // Numai zile valide pot fi selectate
+            onClick={() => date && setSelectedDate(date)}
             className={`cursor-pointer p-2 rounded-lg text-center ${
               date ? "bg-white shadow-lg" : "bg-transparent"
-            } ${
-              date && selectedDate === date
-                ? "ring-2 ring-cyan-600" // Chenar albastru pentru ziua selectată
-                : ""
-            } ${
-              date && hasCards(date) ? "bg-yellow-100" : "" // Fundal galben pentru zilele cu carduri
+            } ${date && selectedDate === date ? "ring-2 ring-cyan-600" : ""} ${
+              date && hasCards(date) ? "bg-yellow-100" : ""
             }`}
           >
             {date ? date.split("-")[2] : ""}
@@ -268,120 +280,150 @@ const Calendar = () => {
             Add Card
           </button>
 
-          <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId={selectedDate} type="card">
-              {(provided) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-6"
-                >
-                  {cardsByDate[selectedDate]?.map((card, index) => (
-                    <Draggable
-                      key={card.id}
-                      draggableId={card.id}
-                      index={index}
+          <div className="mt-6">
+            {cardsByDate[selectedDate]?.map((card) => (
+              <div
+                key={card.id}
+                className="shadow-lg rounded-lg p-4 bg-white mb-4"
+              >
+                {editingCard === card.id ? (
+                  <div className="flex flex-col">
+                    <input
+                      type="text"
+                      defaultValue={card.title}
+                      onBlur={(e) => updateCard(card.id, e.target.value.trim())}
+                      className="border rounded p-2 mb-2"
+                    />
+                    <button
+                      onClick={() => setEditingCard(null)}
+                      className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
                     >
-                      {(provided) => (
-                        <div
-                          className="shadow-lg rounded-lg p-4 bg-white relative"
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2 flex items-center justify-between">
+                    {card.title}
+                    <div className="flex gap-2">
+                      <FaEdit
+                        onClick={() => setEditingCard(card.id)}
+                        className="text-blue-600 cursor-pointer hover:text-blue-800"
+                      />
+                      <FaTrash
+                        onClick={() => deleteCard(card.id)}
+                        className="text-red-600 cursor-pointer hover:text-red-800"
+                      />
+                    </div>
+                  </h3>
+                )}
+                <div className="mt-4">
+                  {card.tasks.map((task, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center mb-2 justify-between"
+                    >
+                      <select
+                        value={task.status}
+                        onChange={(e) =>
+                          updateTaskStatus(card.id, index, e.target.value)
+                        }
+                        className="bg-gray-200 p-1 rounded-lg"
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="won">WON</option>
+                        <option value="lost">LOST</option>
+                      </select>
+                      {editingTask.cardId === card.id &&
+                      editingTask.taskIndex === index ? (
+                        <input
+                          type="text"
+                          value={editingTask.newTaskName}
+                          onChange={(e) =>
+                            setEditingTask({
+                              ...editingTask,
+                              newTaskName: e.target.value,
+                            })
+                          }
+                          onBlur={() => updateTaskName(card.id, index)}
+                          className="ml-2 p-1 border rounded"
+                        />
+                      ) : (
+                        <span
+                          className={`${
+                            task.status === "won"
+                              ? "text-green-600 font-bold"
+                              : task.status === "lost"
+                              ? "text-red-600 font-bold"
+                              : "text-gray-600"
+                          }`}
                         >
-                          {editingCard === card.id ? (
-                            <div className="flex flex-col">
-                              <input
-                                type="text"
-                                defaultValue={card.title}
-                                onBlur={(e) =>
-                                  updateCard(card.id, e.target.value.trim())
-                                }
-                                className="border rounded p-2 mb-2"
-                              />
-                              <button
-                                onClick={() => setEditingCard(null)}
-                                className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          ) : (
-                            <h3 className="text-xl font-semibold text-gray-700 mb-2 flex items-center justify-between">
-                              {card.title}
-                              <div className="flex gap-2">
-                                <FaEdit
-                                  onClick={() => setEditingCard(card.id)}
-                                  className="text-blue-600 cursor-pointer hover:text-blue-800"
-                                />
-                                <FaTrash
-                                  onClick={() => deleteCard(card.id)}
-                                  className="text-red-600 cursor-pointer hover:text-red-800"
-                                />
-                              </div>
-                            </h3>
-                          )}
-                          <div className="mt-4">
-                            {card.tasks.map((task, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center mb-2 justify-between"
-                              >
-                                {editingTask[card.id] === index ? (
-                                  <input
-                                    type="text"
-                                    defaultValue={task}
-                                    onBlur={(e) =>
-                                      updateTask(
-                                        card.id,
-                                        index,
-                                        e.target.value.trim()
-                                      )
-                                    }
-                                    className="border rounded p-2 w-full mr-2"
-                                  />
-                                ) : (
-                                  <span>{task}</span>
-                                )}
-                                <div className="flex gap-2">
-                                  <FaEdit
-                                    onClick={() =>
-                                      setEditingTask({ [card.id]: index })
-                                    }
-                                    className="text-blue-600 cursor-pointer hover:text-blue-800"
-                                  />
-                                  <FaTrash
-                                    onClick={() => deleteTask(card.id, index)}
-                                    className="text-red-600 cursor-pointer hover:text-red-800"
-                                  />
-                                </div>
-                              </div>
-                            ))}
-                            <input
-                              type="text"
-                              value={taskInputs[card.id] || ""}
-                              onChange={(e) =>
-                                handleTaskInputChange(card.id, e.target.value)
-                              }
-                              placeholder="New Task"
-                              className="w-full p-2 border border-gray-300 rounded-lg"
-                            />
-                            <button
-                              onClick={() => addTaskToCard(card.id)}
-                              className="w-full py-2 mt-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-                            >
-                              Add Task
-                            </button>
-                          </div>
-                        </div>
+                          {task.task}
+                        </span>
                       )}
-                    </Draggable>
+
+                      {/* Cota pentru Task */}
+                      <input
+                        type="number"
+                        value={taskCotes[card.id]?.[index] || ""}
+                        onChange={(e) =>
+                          handleTaskCoteChange(card.id, index, e.target.value)
+                        }
+                        onBlur={(e) => {
+                          handleTaskCoteChange(card.id, index, e.target.value);
+                        }}
+                        placeholder="Cota"
+                        className="w-20 p-1 border border-gray-300 rounded-lg ml-4"
+                      />
+
+                      <div className="flex gap-2">
+                        <FaEdit
+                          onClick={() =>
+                            setEditingTask({
+                              cardId: card.id,
+                              taskIndex: index,
+                              newTaskName: task.task,
+                            })
+                          }
+                          className="text-yellow-600 cursor-pointer hover:text-yellow-800 ml-2"
+                        />
+                        <FaTrash
+                          onClick={() => deleteTask(card.id, index)}
+                          className="text-red-600 cursor-pointer hover:text-red-800"
+                        />
+                      </div>
+                    </div>
                   ))}
-                  {provided.placeholder}
+                  <input
+                    type="text"
+                    value={taskInputs[card.id] || ""}
+                    onChange={(e) =>
+                      handleTaskInputChange(card.id, e.target.value)
+                    }
+                    placeholder="Add task"
+                    className="w-full p-2 border border-gray-300 rounded-lg mt-4"
+                  />
+                  <button
+                    onClick={() => addTaskToCard(card.id)}
+                    className="w-full py-2 bg-blue-600 text-white rounded-lg mt-2"
+                  >
+                    Add Task
+                  </button>
+
+                  {/* Cota Totală pe aceeași linie cu statusul cardului */}
+                  {card.tasks.length > 0 && (
+                    <div className="mt-4 flex items-center justify-between">
+                      <span>
+                        Status: {calculateCardStatus(card.tasks).toUpperCase()}
+                      </span>
+                      <span className="font-semibold text-gray-800">
+                        Total Cota: {calculateTotalCote(card.id).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

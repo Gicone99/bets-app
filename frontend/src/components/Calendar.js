@@ -2,31 +2,31 @@ import React, { useState, useEffect } from "react";
 import { FaEdit, FaTrash } from "react-icons/fa";
 
 const Calendar = () => {
-  const [cardsByDate, setCardsByDate] = useState({});
+  const [betsByDate, setBetsByDate] = useState({});
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
-  const [newCardTitle, setNewCardTitle] = useState("");
-  const [taskInputs, setTaskInputs] = useState({});
-  const [taskCotes, setTaskCotes] = useState({});
-  const [editingCard, setEditingCard] = useState(null);
-  const [editingTask, setEditingTask] = useState({
-    cardId: null,
-    taskIndex: null,
-    newTaskName: "",
+  const [newBetTitle, setNewBetTitle] = useState("");
+  const [bettingMarketsInputs, setBettingMarketsInputs] = useState({});
+  const [bettingMarketsCotes, setBettingMarketsCotes] = useState({});
+  const [editingBet, setEditingBet] = useState(null);
+  const [editingBettingMarkets, setEditingBettingMarkets] = useState({
+    betId: null,
+    bettingMarketsIndex: null,
+    newBettingMarketsName: "",
   });
 
   useEffect(() => {
-    const storedCards = JSON.parse(localStorage.getItem("cardsByDate"));
-    if (storedCards) {
-      setCardsByDate(storedCards);
+    const storedBets = JSON.parse(localStorage.getItem("betsByDate"));
+    if (storedBets) {
+      setBetsByDate(storedBets);
     }
   }, []);
 
   useEffect(() => {
-    if (Object.keys(cardsByDate).length > 0) {
-      localStorage.setItem("cardsByDate", JSON.stringify(cardsByDate));
+    if (Object.keys(betsByDate).length > 0) {
+      localStorage.setItem("betsByDate", JSON.stringify(betsByDate));
     }
-  }, [cardsByDate]);
+  }, [betsByDate]);
 
   const generateDays = () => {
     const year = currentDate.getFullYear();
@@ -50,138 +50,169 @@ const Calendar = () => {
     return days;
   };
 
-  const addCard = () => {
-    if (!newCardTitle.trim() || !selectedDate) return;
-    const newCard = {
+  const addBet = () => {
+    if (!newBetTitle.trim() || !selectedDate) return;
+    const newBet = {
       id: Date.now().toString(),
-      title: newCardTitle,
-      tasks: [],
-      status: "pending", // Statusul inițial al cardului
+      title: newBetTitle,
+      bettingMarketss: [],
+      status: "pending", // Statusul inițial al betului
     };
 
-    setCardsByDate((prev) => ({
+    setBetsByDate((prev) => ({
       ...prev,
-      [selectedDate]: [...(prev[selectedDate] || []), newCard],
+      [selectedDate]: [...(prev[selectedDate] || []), newBet],
     }));
 
-    setNewCardTitle("");
+    setNewBetTitle("");
   };
 
-  const deleteCard = (cardId) => {
-    setCardsByDate((prev) => ({
+  const deleteBet = (betId) => {
+    setBetsByDate((prev) => ({
       ...prev,
-      [selectedDate]: prev[selectedDate].filter((card) => card.id !== cardId),
+      [selectedDate]: prev[selectedDate].filter((bet) => bet.id !== betId),
     }));
   };
 
-  const updateCard = (cardId, updatedTitle) => {
-    setCardsByDate((prev) => {
-      const updatedCards = (prev[selectedDate] || []).map((card) =>
-        card.id === cardId ? { ...card, title: updatedTitle } : card
+  const updateBet = (betId, updatedTitle) => {
+    setBetsByDate((prev) => {
+      const updatedBets = (prev[selectedDate] || []).map((bet) =>
+        bet.id === betId ? { ...bet, title: updatedTitle } : bet
       );
-      return { ...prev, [selectedDate]: updatedCards };
+      return { ...prev, [selectedDate]: updatedBets };
     });
-    setEditingCard(null);
+    setEditingBet(null);
   };
 
-  const handleTaskInputChange = (cardId, value) => {
-    setTaskInputs((prev) => ({ ...prev, [cardId]: value }));
+  const handleBettingMarketsInputChange = (betId, value) => {
+    setBettingMarketsInputs((prev) => ({ ...prev, [betId]: value }));
   };
 
-  const handleTaskCoteChange = (cardId, taskIndex, value) => {
+  const handleBettingMarketsCoteChange = (
+    betId,
+    bettingMarketsIndex,
+    value
+  ) => {
     value = value.replace(",", ".");
     if (isNaN(value) || parseFloat(value) < 1) {
       return; // Nu actualiza valoarea dacă este mai mică decât 1 sau nu este un număr valid
     }
 
-    setTaskCotes((prev) => ({
+    setBettingMarketsCotes((prev) => ({
       ...prev,
-      [cardId]: {
-        ...prev[cardId],
-        [taskIndex]: parseFloat(value),
+      [betId]: {
+        ...prev[betId],
+        [bettingMarketsIndex]: parseFloat(value),
       },
     }));
   };
 
-  const addTaskToCard = (cardId) => {
-    const task = taskInputs[cardId]?.trim();
-    if (!task) return;
+  const addBettingMarketsToBet = (betId) => {
+    const bettingMarkets = bettingMarketsInputs[betId]?.trim();
+    if (!bettingMarkets) return;
 
-    setCardsByDate((prev) => {
-      const updatedCards = (prev[selectedDate] || []).map((card) =>
-        card.id === cardId
-          ? { ...card, tasks: [...card.tasks, { task, status: "pending" }] }
-          : card
+    setBetsByDate((prev) => {
+      const updatedBets = (prev[selectedDate] || []).map((bet) =>
+        bet.id === betId
+          ? {
+              ...bet,
+              bettingMarketss: [
+                ...bet.bettingMarketss,
+                { bettingMarkets, status: "pending" },
+              ],
+            }
+          : bet
       );
-      return { ...prev, [selectedDate]: updatedCards };
+      return { ...prev, [selectedDate]: updatedBets };
     });
 
-    setTaskInputs((prev) => ({ ...prev, [cardId]: "" }));
+    setBettingMarketsInputs((prev) => ({ ...prev, [betId]: "" }));
   };
 
-  const deleteTask = (cardId, taskIndex) => {
-    setCardsByDate((prev) => {
-      const updatedCards = (prev[selectedDate] || []).map((card) =>
-        card.id === cardId
+  const deleteBettingMarkets = (betId, bettingMarketsIndex) => {
+    setBetsByDate((prev) => {
+      const updatedBets = (prev[selectedDate] || []).map((bet) =>
+        bet.id === betId
           ? {
-              ...card,
-              tasks: card.tasks.filter((_, index) => index !== taskIndex),
+              ...bet,
+              bettingMarketss: bet.bettingMarketss.filter(
+                (_, index) => index !== bettingMarketsIndex
+              ),
             }
-          : card
+          : bet
       );
-      return { ...prev, [selectedDate]: updatedCards };
+      return { ...prev, [selectedDate]: updatedBets };
     });
 
-    setTaskCotes((prev) => {
+    setBettingMarketsCotes((prev) => {
       const updatedCotes = { ...prev };
-      delete updatedCotes[cardId][taskIndex];
+      delete updatedCotes[betId][bettingMarketsIndex];
       return updatedCotes;
     });
   };
 
-  const updateTaskStatus = (cardId, taskIndex, status) => {
-    setCardsByDate((prev) => {
-      const updatedCards = (prev[selectedDate] || []).map((card) =>
-        card.id === cardId
+  const updateBettingMarketsStatus = (betId, bettingMarketsIndex, status) => {
+    setBetsByDate((prev) => {
+      const updatedBets = (prev[selectedDate] || []).map((bet) =>
+        bet.id === betId
           ? {
-              ...card,
-              tasks: card.tasks.map((task, index) =>
-                index === taskIndex ? { ...task, status } : task
+              ...bet,
+              bettingMarketss: bet.bettingMarketss.map(
+                (bettingMarkets, index) =>
+                  index === bettingMarketsIndex
+                    ? { ...bettingMarkets, status }
+                    : bettingMarkets
               ),
             }
-          : card
+          : bet
       );
-      return { ...prev, [selectedDate]: updatedCards };
+      return { ...prev, [selectedDate]: updatedBets };
     });
   };
 
-  const updateTaskName = (cardId, taskIndex) => {
-    setCardsByDate((prev) => {
-      const updatedCards = (prev[selectedDate] || []).map((card) =>
-        card.id === cardId
+  const updateBettingMarketsName = (betId, bettingMarketsIndex) => {
+    setBetsByDate((prev) => {
+      const updatedBets = (prev[selectedDate] || []).map((bet) =>
+        bet.id === betId
           ? {
-              ...card,
-              tasks: card.tasks.map((task, index) =>
-                index === taskIndex
-                  ? { ...task, task: editingTask.newTaskName }
-                  : task
+              ...bet,
+              bettingMarketss: bet.bettingMarketss.map(
+                (bettingMarkets, index) =>
+                  index === bettingMarketsIndex
+                    ? {
+                        ...bettingMarkets,
+                        bettingMarkets:
+                          editingBettingMarkets.newBettingMarketsName,
+                      }
+                    : bettingMarkets
               ),
             }
-          : card
+          : bet
       );
-      return { ...prev, [selectedDate]: updatedCards };
+      return { ...prev, [selectedDate]: updatedBets };
     });
-    setEditingTask({ cardId: null, taskIndex: null, newTaskName: "" });
+    setEditingBettingMarkets({
+      betId: null,
+      bettingMarketsIndex: null,
+      newBettingMarketsName: "",
+    });
   };
 
-  const calculateTotalCote = (cardId) => {
-    const tasksCotes = taskCotes[cardId] || {};
-    return Object.values(tasksCotes).reduce((total, cote) => total * cote, 1);
+  const calculateTotalCote = (betId) => {
+    const bettingMarketssCotes = bettingMarketsCotes[betId] || {};
+    return Object.values(bettingMarketssCotes).reduce(
+      (total, cote) => total * cote,
+      1
+    );
   };
 
-  const calculateCardStatus = (tasks) => {
-    const hasLost = tasks.some((task) => task.status === "lost");
-    const allWon = tasks.every((task) => task.status === "won");
+  const calculateBetStatus = (bettingMarketss) => {
+    const hasLost = bettingMarketss.some(
+      (bettingMarkets) => bettingMarkets.status === "lost"
+    );
+    const allWon = bettingMarketss.every(
+      (bettingMarkets) => bettingMarkets.status === "won"
+    );
 
     if (hasLost) return "lost";
     if (allWon) return "won";
@@ -202,14 +233,14 @@ const Calendar = () => {
 
   const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-  const hasCards = (date) => {
-    return (cardsByDate[date] || []).length > 0;
+  const hasBets = (date) => {
+    return (betsByDate[date] || []).length > 0;
   };
 
   return (
     <div className="max-w-4xl mx-auto bg-gradient-to-b from-blue-200 via-white to-blue-100 shadow-xl rounded-2xl p-8">
       <h1 className="text-3xl font-semibold text-center mb-6 text-gray-800">
-        Calendar Task Manager with Cards
+        Betting Calendar
       </h1>
       <div className="flex justify-between items-center mb-6">
         <button
@@ -248,13 +279,13 @@ const Calendar = () => {
             className={`cursor-pointer p-2 rounded-lg text-center ${
               date ? "bg-white shadow-lg" : "bg-transparent"
             } ${date && selectedDate === date ? "ring-2 ring-cyan-600" : ""} ${
-              date && hasCards(date) ? "bg-yellow-100" : ""
+              date && hasBets(date) ? "bg-yellow-100" : ""
             }`}
           >
             {date ? date.split("-")[2] : ""}
-            {date && cardsByDate[date]?.length > 0 && (
+            {date && betsByDate[date]?.length > 0 && (
               <div className="mt-2 text-xs text-gray-600">
-                {cardsByDate[date].length} Cards
+                {betsByDate[date].length} Bets
               </div>
             )}
           </div>
@@ -264,38 +295,38 @@ const Calendar = () => {
       {selectedDate && (
         <div className="mt-6">
           <h2 className="text-xl font-medium text-gray-800 mb-4">
-            Tasks for {selectedDate}
+            Betting Markets for {selectedDate}
           </h2>
           <input
             type="text"
-            value={newCardTitle}
-            onChange={(e) => setNewCardTitle(e.target.value)}
-            placeholder="New card title"
+            value={newBetTitle}
+            onChange={(e) => setNewBetTitle(e.target.value)}
+            placeholder="New bet title"
             className="w-full p-2 mb-4 border border-gray-300 rounded-lg"
           />
           <button
-            onClick={addCard}
+            onClick={addBet}
             className="w-full py-2 bg-blue-600 text-white rounded-lg"
           >
-            Add Card
+            Add Bet
           </button>
 
           <div className="mt-6">
-            {cardsByDate[selectedDate]?.map((card) => (
+            {betsByDate[selectedDate]?.map((bet) => (
               <div
-                key={card.id}
+                key={bet.id}
                 className="shadow-lg rounded-lg p-4 bg-white mb-4"
               >
-                {editingCard === card.id ? (
+                {editingBet === bet.id ? (
                   <div className="flex flex-col">
                     <input
                       type="text"
-                      defaultValue={card.title}
-                      onBlur={(e) => updateCard(card.id, e.target.value.trim())}
+                      defaultValue={bet.title}
+                      onBlur={(e) => updateBet(bet.id, e.target.value.trim())}
                       className="border rounded p-2 mb-2"
                     />
                     <button
-                      onClick={() => setEditingCard(null)}
+                      onClick={() => setEditingBet(null)}
                       className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
                     >
                       Cancel
@@ -303,29 +334,33 @@ const Calendar = () => {
                   </div>
                 ) : (
                   <h3 className="text-xl font-semibold text-gray-700 mb-2 flex items-center justify-between">
-                    {card.title}
+                    {bet.title}
                     <div className="flex gap-2">
                       <FaEdit
-                        onClick={() => setEditingCard(card.id)}
+                        onClick={() => setEditingBet(bet.id)}
                         className="text-blue-600 cursor-pointer hover:text-blue-800"
                       />
                       <FaTrash
-                        onClick={() => deleteCard(card.id)}
+                        onClick={() => deleteBet(bet.id)}
                         className="text-red-600 cursor-pointer hover:text-red-800"
                       />
                     </div>
                   </h3>
                 )}
                 <div className="mt-4">
-                  {card.tasks.map((task, index) => (
+                  {bet.bettingMarketss.map((bettingMarkets, index) => (
                     <div
                       key={index}
                       className="flex items-center mb-2 justify-between"
                     >
                       <select
-                        value={task.status}
+                        value={bettingMarkets.status}
                         onChange={(e) =>
-                          updateTaskStatus(card.id, index, e.target.value)
+                          updateBettingMarketsStatus(
+                            bet.id,
+                            index,
+                            e.target.value
+                          )
                         }
                         className="bg-gray-200 p-1 rounded-lg"
                       >
@@ -333,48 +368,56 @@ const Calendar = () => {
                         <option value="won">WON</option>
                         <option value="lost">LOST</option>
                       </select>
-                      {editingTask.cardId === card.id &&
-                      editingTask.taskIndex === index ? (
+                      {editingBettingMarkets.betId === bet.id &&
+                      editingBettingMarkets.bettingMarketsIndex === index ? (
                         <input
                           type="text"
-                          value={editingTask.newTaskName}
+                          value={editingBettingMarkets.newBettingMarketsName}
                           onChange={(e) =>
-                            setEditingTask({
-                              ...editingTask,
-                              newTaskName: e.target.value,
+                            setEditingBettingMarkets({
+                              ...editingBettingMarkets,
+                              newBettingMarketsName: e.target.value,
                             })
                           }
-                          onBlur={() => updateTaskName(card.id, index)}
+                          onBlur={() => updateBettingMarketsName(bet.id, index)}
                           className="ml-2 p-1 border rounded"
                         />
                       ) : (
                         <span
                           className={`${
-                            task.status === "won"
+                            bettingMarkets.status === "won"
                               ? "text-green-600 font-bold"
-                              : task.status === "lost"
+                              : bettingMarkets.status === "lost"
                               ? "text-red-600 font-bold"
                               : "text-gray-600"
                           }`}
                         >
-                          {task.task}
+                          {bettingMarkets.bettingMarkets}
                         </span>
                       )}
 
-                      {/* Cota pentru Task */}
+                      {/* Cota pentru BettingMarkets */}
                       <div className="flex items-center gap-2 ml-4">
                         <input
                           type="number"
-                          value={taskCotes[card.id]?.[index] || ""}
+                          value={bettingMarketsCotes[bet.id]?.[index] || ""}
                           onChange={(e) =>
-                            handleTaskCoteChange(card.id, index, e.target.value)
+                            handleBettingMarketsCoteChange(
+                              bet.id,
+                              index,
+                              e.target.value
+                            )
                           }
                           onBlur={(e) => {
                             const updatedValue = e.target.value.replace(
                               ",",
                               "."
                             );
-                            handleTaskCoteChange(card.id, index, updatedValue);
+                            handleBettingMarketsCoteChange(
+                              bet.id,
+                              index,
+                              updatedValue
+                            );
                           }}
                           placeholder="Odds"
                           className="w-20 p-1 border border-gray-300 rounded-lg ml-4"
@@ -383,16 +426,17 @@ const Calendar = () => {
                         {/* <div className="flex gap-2"> */}
                         <FaEdit
                           onClick={() =>
-                            setEditingTask({
-                              cardId: card.id,
-                              taskIndex: index,
-                              newTaskName: task.task,
+                            setEditingBettingMarkets({
+                              betId: bet.id,
+                              bettingMarketsIndex: index,
+                              newBettingMarketsName:
+                                bettingMarkets.bettingMarkets,
                             })
                           }
                           className="text-blue-600 cursor-pointer hover:text-blue-800 ml-2"
                         />
                         <FaTrash
-                          onClick={() => deleteTask(card.id, index)}
+                          onClick={() => deleteBettingMarkets(bet.id, index)}
                           className="text-red-600 cursor-pointer hover:text-red-800"
                         />
                       </div>
@@ -400,28 +444,29 @@ const Calendar = () => {
                   ))}
                   <input
                     type="text"
-                    value={taskInputs[card.id] || ""}
+                    value={bettingMarketsInputs[bet.id] || ""}
                     onChange={(e) =>
-                      handleTaskInputChange(card.id, e.target.value)
+                      handleBettingMarketsInputChange(bet.id, e.target.value)
                     }
-                    placeholder="Add task"
+                    placeholder="Add betting markets"
                     className="w-full p-2 border border-gray-300 rounded-lg mt-4"
                   />
                   <button
-                    onClick={() => addTaskToCard(card.id)}
+                    onClick={() => addBettingMarketsToBet(bet.id)}
                     className="w-full py-2 bg-blue-600 text-white rounded-lg mt-2"
                   >
-                    Add Task
+                    Add Betting Markets
                   </button>
 
-                  {/* Cota Totală pe aceeași linie cu statusul cardului */}
-                  {card.tasks.length > 0 && (
+                  {/* Cota Totală pe aceeași linie cu statusul betului */}
+                  {bet.bettingMarketss.length > 0 && (
                     <div className="mt-4 flex items-center justify-between">
                       <span>
-                        Status: {calculateCardStatus(card.tasks).toUpperCase()}
+                        Status:{" "}
+                        {calculateBetStatus(bet.bettingMarketss).toUpperCase()}
                       </span>
                       <span className="font-semibold text-gray-800">
-                        Odds: {calculateTotalCote(card.id).toFixed(2)}
+                        Odds: {calculateTotalCote(bet.id).toFixed(2)}
                       </span>
                     </div>
                   )}

@@ -362,20 +362,25 @@ const Calendar = () => {
                       )}
 
                       {/* Cota pentru Task */}
-                      <input
-                        type="number"
-                        value={taskCotes[card.id]?.[index] || ""}
-                        onChange={(e) =>
-                          handleTaskCoteChange(card.id, index, e.target.value)
-                        }
-                        onBlur={(e) => {
-                          handleTaskCoteChange(card.id, index, e.target.value);
-                        }}
-                        placeholder="Cota"
-                        className="w-20 p-1 border border-gray-300 rounded-lg ml-4"
-                      />
+                      <div className="flex items-center gap-2 ml-4">
+                        <input
+                          type="number"
+                          value={taskCotes[card.id]?.[index] || ""}
+                          onChange={(e) =>
+                            handleTaskCoteChange(card.id, index, e.target.value)
+                          }
+                          onBlur={(e) => {
+                            handleTaskCoteChange(
+                              card.id,
+                              index,
+                              e.target.value
+                            );
+                          }}
+                          placeholder="Cota"
+                          className="w-20 p-1 border border-gray-300 rounded-lg ml-4"
+                        />
 
-                      <div className="flex gap-2">
+                        {/* <div className="flex gap-2"> */}
                         <FaEdit
                           onClick={() =>
                             setEditingTask({
@@ -384,7 +389,7 @@ const Calendar = () => {
                               newTaskName: task.task,
                             })
                           }
-                          className="text-yellow-600 cursor-pointer hover:text-yellow-800 ml-2"
+                          className="text-blue-600 cursor-pointer hover:text-blue-800 ml-2"
                         />
                         <FaTrash
                           onClick={() => deleteTask(card.id, index)}

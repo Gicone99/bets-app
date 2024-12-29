@@ -341,20 +341,36 @@ const Calendar = () => {
                 className="shadow-lg rounded-lg p-4 bg-white mb-4"
               >
                 {editingBet === bet.id ? (
-                  <div className="flex flex-col">
+                  <div className="flex justify-center w-full relative">
+                    {/* Caseta de editare centrată, cu dimensiuni mai echilibrate */}
                     <input
                       type="text"
                       defaultValue={bet.title}
                       onBlur={(e) => updateBet(bet.id, e.target.value.trim())}
-                      className="border rounded p-2 mb-2"
-                      maxLength={50} // Limitează input-ul la 50 de caractere
+                      className="border rounded p-2 w-80 min-h-[40px] max-h-[120px] resize-none" // Lățime mai mică și înălțime echilibrată
+                      maxLength={50}
                     />
-                    <button
-                      onClick={() => setEditingBet(null)}
-                      className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
-                    >
-                      Cancel
-                    </button>
+
+                    {/* Butoanele Update și Cancel aliniate la dreapta */}
+                    <div className="flex gap-2 ml-4 absolute right-0 bottom-0">
+                      <button
+                        onClick={() =>
+                          updateBet(
+                            bet.id,
+                            document.querySelector("textarea").value.trim()
+                          )
+                        }
+                        className="px-4 py-2 text-white bg-green-500 rounded-md text-sm hover:bg-green-600 transition"
+                      >
+                        Update
+                      </button>
+                      <button
+                        onClick={() => setEditingBet(null)} // Revocă editarea
+                        className="px-4 py-2 text-white bg-red-500 rounded-md text-sm hover:bg-red-600 transition"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <h3 className="text-xl font-semibold text-gray-700 mb-2 flex items-center justify-between">
@@ -371,6 +387,7 @@ const Calendar = () => {
                     </div>
                   </h3>
                 )}
+
                 <div className="mt-4">
                   {bet.bettingMarketss.map((bettingMarkets, index) => (
                     <div

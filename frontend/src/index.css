@@ -121,3 +121,12 @@
   text-align: left;
   margin: 5px 0;
 }
+
+/* Stiluri suplimentare pentru butoanele de editare */
+button {
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+button:hover {
+  transform: scale(1.05); /* Mărim ușor butoanele când trecem cu mouse-ul */
+}

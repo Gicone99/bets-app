@@ -179,6 +179,14 @@ const Calendar = () => {
   };
 
   const updateBettingMarketsName = (betId, bettingMarketsIndex) => {
+    const newBettingMarketsName =
+      editingBettingMarkets.newBettingMarketsName.trim();
+
+    if (newBettingMarketsName.length > 50) {
+      alert("Betting market name cannot exceed 50 characters.");
+      return;
+    }
+
     setBetsByDate((prev) => {
       const updatedBets = (prev[selectedDate] || []).map((bet) =>
         bet.id === betId
@@ -189,8 +197,7 @@ const Calendar = () => {
                   index === bettingMarketsIndex
                     ? {
                         ...bettingMarkets,
-                        bettingMarkets:
-                          editingBettingMarkets.newBettingMarketsName,
+                        bettingMarkets: newBettingMarketsName,
                       }
                     : bettingMarkets
               ),
@@ -389,6 +396,7 @@ const Calendar = () => {
                           }
                           onBlur={() => updateBettingMarketsName(bet.id, index)}
                           className="ml-2 p-1 border rounded"
+                          maxLength={50} // Limitează input-ul la 50 de caractere
                         />
                       ) : (
                         <span

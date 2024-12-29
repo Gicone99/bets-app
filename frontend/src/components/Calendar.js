@@ -75,9 +75,16 @@ const Calendar = () => {
   };
 
   const updateBet = (betId, updatedTitle) => {
+    const trimmedTitle = updatedTitle.trim();
+
+    if (trimmedTitle.length > 50) {
+      alert("Bet title cannot exceed 50 characters.");
+      return;
+    }
+
     setBetsByDate((prev) => {
       const updatedBets = (prev[selectedDate] || []).map((bet) =>
-        bet.id === betId ? { ...bet, title: updatedTitle } : bet
+        bet.id === betId ? { ...bet, title: trimmedTitle } : bet
       );
       return { ...prev, [selectedDate]: updatedBets };
     });
@@ -318,6 +325,7 @@ const Calendar = () => {
             onChange={(e) => setNewBetTitle(e.target.value)}
             placeholder="New bet title"
             className="w-full p-2 mb-4 border border-gray-300 rounded-lg"
+            maxLength={50}
           />
           <button
             onClick={addBet}
@@ -339,6 +347,7 @@ const Calendar = () => {
                       defaultValue={bet.title}
                       onBlur={(e) => updateBet(bet.id, e.target.value.trim())}
                       className="border rounded p-2 mb-2"
+                      maxLength={50} // Limitează input-ul la 50 de caractere
                     />
                     <button
                       onClick={() => setEditingBet(null)}

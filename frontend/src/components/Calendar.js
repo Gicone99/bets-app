@@ -85,7 +85,10 @@ const Calendar = () => {
   };
 
   const handleBettingMarketsInputChange = (betId, value) => {
-    setBettingMarketsInputs((prev) => ({ ...prev, [betId]: value }));
+    // Limitează input-ul la 50 de caractere
+    if (value.length <= 50) {
+      setBettingMarketsInputs((prev) => ({ ...prev, [betId]: value }));
+    }
   };
 
   const handleBettingMarketsCoteChange = (
@@ -93,11 +96,16 @@ const Calendar = () => {
     bettingMarketsIndex,
     value
   ) => {
+    // Înlocuiește virgula cu punctul pentru a permite punctul decimal
     value = value.replace(",", ".");
-    if (isNaN(value) || parseFloat(value) < 1) {
-      return; // Nu actualiza valoarea dacă este mai mică decât 1 sau nu este un număr valid
+
+    // Permite doar două zecimale
+    const parts = value.split(".");
+    if (parts.length > 1 && parts[1].length > 2) {
+      return; // Nu permite să introduci mai mult de două zecimale
     }
 
+    // Actualizează valoarea
     setBettingMarketsCotes((prev) => ({
       ...prev,
       [betId]: {

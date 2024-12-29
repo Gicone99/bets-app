@@ -90,8 +90,8 @@ const Calendar = () => {
 
   const handleTaskCoteChange = (cardId, taskIndex, value) => {
     value = value.replace(",", ".");
-    if (isNaN(value) || parseFloat(value) < 0) {
-      return;
+    if (isNaN(value) || parseFloat(value) < 1) {
+      return; // Nu actualiza valoarea dacă este mai mică decât 1 sau nu este un număr valid
     }
 
     setTaskCotes((prev) => ({
@@ -370,13 +370,13 @@ const Calendar = () => {
                             handleTaskCoteChange(card.id, index, e.target.value)
                           }
                           onBlur={(e) => {
-                            handleTaskCoteChange(
-                              card.id,
-                              index,
-                              e.target.value
+                            const updatedValue = e.target.value.replace(
+                              ",",
+                              "."
                             );
+                            handleTaskCoteChange(card.id, index, updatedValue);
                           }}
-                          placeholder="Cota"
+                          placeholder="Odds"
                           className="w-20 p-1 border border-gray-300 rounded-lg ml-4"
                         />
 
@@ -421,7 +421,7 @@ const Calendar = () => {
                         Status: {calculateCardStatus(card.tasks).toUpperCase()}
                       </span>
                       <span className="font-semibold text-gray-800">
-                        Total Cota: {calculateTotalCote(card.id).toFixed(2)}
+                        Odds: {calculateTotalCote(card.id).toFixed(2)}
                       </span>
                     </div>
                   )}

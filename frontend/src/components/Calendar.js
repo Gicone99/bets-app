@@ -1,20 +1,120 @@
 import React, { useState, useEffect } from "react";
 import { FaEdit, FaTrash } from "react-icons/fa";
 
+// Popup pentru adăugarea/editarera unei piețe de pariu
+const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
+  const [bettingMarket, setBettingMarket] = useState(
+    existingMarket?.title || ""
+  );
+  const [status, setStatus] = useState(existingMarket?.status || "pending");
+  const [odds, setOdds] = useState(existingMarket?.odds || "");
+
+  const handleSubmit = () => {
+    if (!bettingMarket.trim() || !odds.trim()) {
+      alert("Please fill all fields");
+      return;
+    }
+    onSubmit(betId, marketId, bettingMarket, status, odds);
+    onClose();
+  };
+
+  const handlebettingMarketChange = (e) => {
+    const newbettingMarket = e.target.value;
+    // Limitează la 50 de caractere
+    if (newbettingMarket.length <= 50) {
+      setBettingMarket(newbettingMarket);
+    }
+  };
+
+  const handleOddsChange = (e) => {
+    let newOdds = e.target.value;
+
+    // Înlocuiește virgula cu punct
+    newOdds = newOdds.replace(",", ".");
+
+    // Permite doar numere și până la 2 zecimale
+    const regex = /^\d*\.?\d{0,2}$/;
+    if (regex.test(newOdds)) {
+      setOdds(newOdds);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50 text-center">
+      <div className="bg-gradient-to-b from-gray-900 via-black to-gray-900 rounded-lg shadow-2xl p-6 w-96">
+        <div className="mb-6">
+          <label className="block text-xl font-bold text-green-400 mb-2">
+            Betting Market
+          </label>
+          <input
+            type="text"
+            placeholder="Enter market name"
+            value={bettingMarket}
+            onChange={handlebettingMarketChange}
+            className="place-items-center w-full p-3 border-2 border-green-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-800 text-white"
+          />
+        </div>
+
+        <div className="flex justify-between mb-6">
+          <div className="w-48">
+            <label className="block text-xl font-bold text-green-400 mb-2">
+              Status
+            </label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="place-items-center w-full p-3 border-2 border-green-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-800 text-white"
+            >
+              <option value="pending">Pending</option>
+              <option value="won">Won</option>
+              <option value="lost">Lost</option>
+            </select>
+          </div>
+          <div className="w-24 ml-6">
+            <label className="block text-xl font-bold text-green-400 mb-2">
+              Odds
+            </label>
+            <input
+              type="text"
+              placeholder="Enter odds"
+              value={odds}
+              onChange={handleOddsChange}
+              className="place-items-center w-full p-3 border-2 border-green-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-800 text-white"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-between gap-8 mt-10">
+          <button
+            onClick={handleSubmit}
+            className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-300 ease-in-out transform hover:scale-105 shadow-md w-1/2"
+          >
+            Submit
+          </button>
+          <button
+            onClick={onClose}
+            className="px-5 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition duration-300 ease-in-out transform hover:scale-105 shadow-md w-1/2"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Componenta principală Calendar
 const Calendar = () => {
   const [betsByDate, setBetsByDate] = useState({});
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
   const [newBetTitle, setNewBetTitle] = useState("");
-  const [bettingMarketsInputs, setBettingMarketsInputs] = useState({});
-  const [bettingMarketsCotes, setBettingMarketsCotes] = useState({});
-  const [editingBet, setEditingBet] = useState(null);
-  const [editingBettingMarkets, setEditingBettingMarkets] = useState({
-    betId: null,
-    bettingMarketsIndex: null,
-    newBettingMarketsName: "",
-  });
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupBetId, setPopupBetId] = useState(null);
+  const [popupMarketId, setPopupMarketId] = useState(null);
+  const [popupMessage, setPopupMessage] = useState("");
 
+  // Încărcăm pariurile din localStorage
   useEffect(() => {
     const storedBets = JSON.parse(localStorage.getItem("betsByDate"));
     if (storedBets) {
@@ -22,6 +122,7 @@ const Calendar = () => {
     }
   }, []);
 
+  // Salvăm pariurile la fiecare modificare
   useEffect(() => {
     if (Object.keys(betsByDate).length > 0) {
       localStorage.setItem("betsByDate", JSON.stringify(betsByDate));
@@ -50,13 +151,15 @@ const Calendar = () => {
     return days;
   };
 
+  // Adăugarea unui nou pariu
   const addBet = () => {
     if (!newBetTitle.trim() || !selectedDate) return;
+
     const newBet = {
       id: Date.now().toString(),
       title: newBetTitle,
-      bettingMarketss: [],
-      status: "pending", // Statusul inițial al betului
+      status: "pending",
+      bettingMarkets: [],
     };
 
     setBetsByDate((prev) => ({
@@ -65,8 +168,55 @@ const Calendar = () => {
     }));
 
     setNewBetTitle("");
+    setPopupMessage("New bet added successfully!");
   };
 
+  // Deschide popup-ul pentru a adăuga/edita o piață de pariu
+  const editBettingMarket = (betId, marketId) => {
+    const bet = betsByDate[selectedDate].find((bet) => bet.id === betId);
+    const market = bet.bettingMarkets.find((market) => market.id === marketId);
+    setPopupBetId(betId);
+    setPopupMarketId(marketId);
+    setShowPopup(true);
+  };
+
+  // Salvează piața de pariu (adăugare/actualizare)
+  const submitBettingMarket = (
+    betId,
+    marketId,
+    bettingMarket,
+    status,
+    odds
+  ) => {
+    setBetsByDate((prev) => {
+      const updatedBets = { ...prev };
+      Object.keys(updatedBets).forEach((date) => {
+        updatedBets[date] = updatedBets[date].map((bet) => {
+          if (bet.id === betId) {
+            if (marketId) {
+              bet.bettingMarkets = bet.bettingMarkets.map((market) =>
+                market.id === marketId
+                  ? { ...market, title: bettingMarket, status, odds }
+                  : market
+              );
+            } else {
+              bet.bettingMarkets.push({
+                id: Date.now().toString(),
+                title: bettingMarket,
+                status,
+                odds,
+              });
+            }
+          }
+          return bet;
+        });
+      });
+      return updatedBets;
+    });
+    setPopupMessage("Betting Market updated successfully!");
+  };
+
+  // Ștergerea unui pariu
   const deleteBet = (betId) => {
     setBetsByDate((prev) => ({
       ...prev,
@@ -74,179 +224,32 @@ const Calendar = () => {
     }));
   };
 
-  const updateBet = (betId, updatedTitle) => {
-    const trimmedTitle = updatedTitle.trim();
-
-    if (trimmedTitle.length > 50) {
-      alert("Bet title cannot exceed 50 characters.");
-      return;
-    }
-
+  // Ștergerea unei piețe de pariu
+  const deleteBettingMarket = (betId, marketId) => {
     setBetsByDate((prev) => {
-      const updatedBets = (prev[selectedDate] || []).map((bet) =>
-        bet.id === betId ? { ...bet, title: trimmedTitle } : bet
-      );
-      return { ...prev, [selectedDate]: updatedBets };
-    });
-    setEditingBet(null);
-  };
-
-  const handleBettingMarketsInputChange = (betId, value) => {
-    // Limitează input-ul la 50 de caractere
-    if (value.length <= 50) {
-      setBettingMarketsInputs((prev) => ({ ...prev, [betId]: value }));
-    }
-  };
-
-  const handleBettingMarketsCoteChange = (
-    betId,
-    bettingMarketsIndex,
-    value
-  ) => {
-    // Înlocuiește virgula cu punctul pentru a permite punctul decimal
-    value = value.replace(",", ".");
-
-    // Permite doar două zecimale
-    const parts = value.split(".");
-    if (parts.length > 1 && parts[1].length > 2) {
-      return; // Nu permite să introduci mai mult de două zecimale
-    }
-
-    // Actualizează valoarea
-    setBettingMarketsCotes((prev) => ({
-      ...prev,
-      [betId]: {
-        ...prev[betId],
-        [bettingMarketsIndex]: parseFloat(value),
-      },
-    }));
-  };
-
-  const addBettingMarketsToBet = (betId) => {
-    const bettingMarkets = bettingMarketsInputs[betId]?.trim();
-    if (!bettingMarkets) return;
-
-    setBetsByDate((prev) => {
-      const updatedBets = (prev[selectedDate] || []).map((bet) =>
-        bet.id === betId
-          ? {
-              ...bet,
-              bettingMarketss: [
-                ...bet.bettingMarketss,
-                { bettingMarkets, status: "pending" },
-              ],
-            }
-          : bet
-      );
-      return { ...prev, [selectedDate]: updatedBets };
-    });
-
-    setBettingMarketsInputs((prev) => ({ ...prev, [betId]: "" }));
-  };
-
-  const deleteBettingMarkets = (betId, bettingMarketsIndex) => {
-    setBetsByDate((prev) => {
-      const updatedBets = (prev[selectedDate] || []).map((bet) =>
-        bet.id === betId
-          ? {
-              ...bet,
-              bettingMarketss: bet.bettingMarketss.filter(
-                (_, index) => index !== bettingMarketsIndex
-              ),
-            }
-          : bet
-      );
-      return { ...prev, [selectedDate]: updatedBets };
-    });
-
-    setBettingMarketsCotes((prev) => {
-      const updatedCotes = { ...prev };
-      delete updatedCotes[betId][bettingMarketsIndex];
-      return updatedCotes;
+      const updatedBets = { ...prev };
+      Object.keys(updatedBets).forEach((date) => {
+        updatedBets[date] = updatedBets[date].map((bet) => {
+          if (bet.id === betId) {
+            bet.bettingMarkets = bet.bettingMarkets.filter(
+              (market) => market.id !== marketId
+            );
+          }
+          return bet;
+        });
+      });
+      return updatedBets;
     });
   };
 
-  const updateBettingMarketsStatus = (betId, bettingMarketsIndex, status) => {
-    setBetsByDate((prev) => {
-      const updatedBets = (prev[selectedDate] || []).map((bet) =>
-        bet.id === betId
-          ? {
-              ...bet,
-              bettingMarketss: bet.bettingMarketss.map(
-                (bettingMarkets, index) =>
-                  index === bettingMarketsIndex
-                    ? { ...bettingMarkets, status }
-                    : bettingMarkets
-              ),
-            }
-          : bet
-      );
-      return { ...prev, [selectedDate]: updatedBets };
-    });
-  };
-
-  const updateBettingMarketsName = (betId, bettingMarketsIndex) => {
-    const newBettingMarketsName =
-      editingBettingMarkets.newBettingMarketsName.trim();
-
-    if (newBettingMarketsName.length > 50) {
-      alert("Betting market name cannot exceed 50 characters.");
-      return;
-    }
-
-    setBetsByDate((prev) => {
-      const updatedBets = (prev[selectedDate] || []).map((bet) =>
-        bet.id === betId
-          ? {
-              ...bet,
-              bettingMarketss: bet.bettingMarketss.map(
-                (bettingMarkets, index) =>
-                  index === bettingMarketsIndex
-                    ? {
-                        ...bettingMarkets,
-                        bettingMarkets: newBettingMarketsName,
-                      }
-                    : bettingMarkets
-              ),
-            }
-          : bet
-      );
-      return { ...prev, [selectedDate]: updatedBets };
-    });
-    setEditingBettingMarkets({
-      betId: null,
-      bettingMarketsIndex: null,
-      newBettingMarketsName: "",
-    });
-  };
-
-  const calculateTotalCote = (betId) => {
-    const bettingMarketssCotes = bettingMarketsCotes[betId] || {};
-    return Object.values(bettingMarketssCotes).reduce(
-      (total, cote) => total * cote,
-      1
-    );
-  };
-
-  const calculateBetStatus = (bettingMarketss) => {
-    const hasLost = bettingMarketss.some(
-      (bettingMarkets) => bettingMarkets.status === "lost"
-    );
-    const allWon = bettingMarketss.every(
-      (bettingMarkets) => bettingMarkets.status === "won"
-    );
-
-    if (hasLost) return "lost";
-    if (allWon) return "won";
-    return "pending";
-  };
-
+  // Mergi la luna precedentă
   const goToPreviousMonth = () => {
     setCurrentDate(
       (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1)
     );
   };
 
+  // Mergi la luna următoare
   const goToNextMonth = () => {
     setCurrentDate(
       (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1)
@@ -260,25 +263,25 @@ const Calendar = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-gradient-to-b from-blue-200 via-white to-blue-100 shadow-xl rounded-2xl p-8">
-      <h1 className="text-3xl font-semibold text-center mb-6 text-gray-800">
+    <div className="max-w-4xl mx-auto bg-gradient-to-b from-black via-gray-900 to-gray-900 shadow-xl rounded-2xl p-8">
+      <h1 className="text-3xl font-semibold text-center mb-6 text-green-400">
         Betting Calendar
       </h1>
       <div className="flex justify-between items-center mb-6">
         <button
-          className="text-2xl text-gray-600 hover:text-blue-500 transition duration-200"
+          className="text-2xl text-green-400 hover:text-blue-500 transition duration-200"
           onClick={goToPreviousMonth}
         >
           ←
         </button>
-        <span className="text-xl font-medium text-gray-700">
+        <span className="text-xl font-medium text-green-400">
           {currentDate.toLocaleString("en-US", {
             month: "long",
             year: "numeric",
           })}
         </span>
         <button
-          className="text-2xl text-gray-600 hover:text-blue-500 transition duration-200"
+          className="text-2xl text-green-400 hover:text-blue-500 transition duration-200"
           onClick={goToNextMonth}
         >
           →
@@ -287,7 +290,7 @@ const Calendar = () => {
 
       <div className="grid grid-cols-7 gap-2 mb-4">
         {weekDays.map((day) => (
-          <div key={day} className="text-center font-medium text-gray-700">
+          <div key={day} className="text-center font-medium text-green-400">
             {day}
           </div>
         ))}
@@ -299,14 +302,14 @@ const Calendar = () => {
             key={index}
             onClick={() => date && setSelectedDate(date)}
             className={`cursor-pointer p-2 rounded-lg text-center ${
-              date ? "bg-white shadow-lg" : "bg-transparent"
-            } ${date && selectedDate === date ? "ring-2 ring-cyan-600" : ""} ${
-              date && hasBets(date) ? "bg-yellow-100" : ""
+              date ? "bg-gray-800 text-white" : "bg-transparent"
+            } ${date && selectedDate === date ? "ring-2 ring-green-400" : ""} ${
+              date && hasBets(date) ? "bg-green-500" : ""
             }`}
           >
             {date ? date.split("-")[2] : ""}
             {date && betsByDate[date]?.length > 0 && (
-              <div className="mt-2 text-xs text-gray-600">
+              <div className="mt-2 text-xs text-gray-400">
                 {betsByDate[date].length} Bets
               </div>
             )}
@@ -316,207 +319,158 @@ const Calendar = () => {
 
       {selectedDate && (
         <div className="mt-6">
-          <h2 className="text-xl font-medium text-gray-800 mb-4">
+          <h2 className="text-xl font-medium text-green-400 mb-4">
             Betting Markets for {selectedDate}
           </h2>
           <input
             type="text"
+            placeholder="Enter bet title"
             value={newBetTitle}
             onChange={(e) => setNewBetTitle(e.target.value)}
-            placeholder="New bet title"
-            className="w-full p-2 mb-4 border border-gray-300 rounded-lg"
-            maxLength={50}
+            className="w-full p-3 mb-4 border-2 border-green-400 rounded-lg bg-gray-800 text-white"
           />
           <button
             onClick={addBet}
-            className="w-full py-2 bg-blue-600 text-white rounded-lg"
+            className="w-full py-2 bg-green-600 text-white rounded-lg mb-4"
           >
             Add Bet
           </button>
+          <div className="mt-4">
+            {betsByDate[selectedDate]?.map((bet) => {
+              // Calculăm cotele totale din betting markets
+              const totalOdds = bet.bettingMarkets.reduce((acc, market) => {
+                const odds = parseFloat(market.odds);
+                return acc * odds; // Înmulțim cotele pentru a obține cota finală
+              }, 1);
 
-          <div className="mt-6">
-            {betsByDate[selectedDate]?.map((bet) => (
-              <div
-                key={bet.id}
-                className="shadow-lg rounded-lg p-4 bg-white mb-4"
-              >
-                {editingBet === bet.id ? (
-                  <div className="flex justify-center w-full relative">
-                    {/* Caseta de editare centrată, cu dimensiuni mai echilibrate */}
-                    <input
-                      type="text"
-                      defaultValue={bet.title}
-                      onBlur={(e) => updateBet(bet.id, e.target.value.trim())}
-                      className="border rounded p-2 w-80 min-h-[40px] max-h-[120px] resize-none" // Lățime mai mică și înălțime echilibrată
-                      maxLength={50}
-                    />
-
-                    {/* Butoanele Update și Cancel aliniate la dreapta */}
-                    <div className="flex gap-2 ml-4 absolute right-0 bottom-0">
-                      <button
-                        onClick={() =>
-                          updateBet(
-                            bet.id,
-                            document.querySelector("textarea").value.trim()
-                          )
-                        }
-                        className="px-4 py-2 text-white bg-green-500 rounded-md text-sm hover:bg-green-600 transition"
-                      >
-                        Update
-                      </button>
-                      <button
-                        onClick={() => setEditingBet(null)} // Revocă editarea
-                        className="px-4 py-2 text-white bg-red-500 rounded-md text-sm hover:bg-red-600 transition"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <h3 className="text-xl font-semibold text-gray-700 mb-2 flex items-center justify-between">
-                    {bet.title}
-                    <div className="flex gap-2">
-                      <FaEdit
-                        onClick={() => setEditingBet(bet.id)}
-                        className="text-blue-600 cursor-pointer hover:text-blue-800"
-                      />
-                      <FaTrash
-                        onClick={() => deleteBet(bet.id)}
-                        className="text-red-600 cursor-pointer hover:text-red-800"
-                      />
-                    </div>
-                  </h3>
-                )}
-
-                <div className="mt-4">
-                  {bet.bettingMarketss.map((bettingMarkets, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center mb-2 justify-between"
+              return (
+                <div
+                  key={bet.id}
+                  className="p-6 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-800 text-white rounded-lg shadow-xl mb-4 flex flex-col"
+                >
+                  {/* Titlu Centrat și Butonul de Ștergere pe aceeași linie */}
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-bold text-center flex-1">
+                      {bet.title}
+                    </h3>
+                    {/* Buton pentru ștergerea betului */}
+                    <button
+                      onClick={() => deleteBet(bet.id)}
+                      className="text-red-600 hover:text-red-800"
                     >
-                      <select
-                        value={bettingMarkets.status}
-                        onChange={(e) =>
-                          updateBettingMarketsStatus(
-                            bet.id,
-                            index,
-                            e.target.value
-                          )
-                        }
-                        className="bg-gray-200 p-1 rounded-lg"
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="won">WON</option>
-                        <option value="lost">LOST</option>
-                      </select>
-                      {editingBettingMarkets.betId === bet.id &&
-                      editingBettingMarkets.bettingMarketsIndex === index ? (
-                        <input
-                          type="text"
-                          value={editingBettingMarkets.newBettingMarketsName}
-                          onChange={(e) =>
-                            setEditingBettingMarkets({
-                              ...editingBettingMarkets,
-                              newBettingMarketsName: e.target.value,
-                            })
-                          }
-                          onBlur={() => updateBettingMarketsName(bet.id, index)}
-                          className="ml-2 p-1 border rounded"
-                          maxLength={50} // Limitează input-ul la 50 de caractere
-                        />
-                      ) : (
-                        <span
-                          className={`${
-                            bettingMarkets.status === "won"
-                              ? "text-green-600 font-bold"
-                              : bettingMarkets.status === "lost"
-                              ? "text-red-600 font-bold"
-                              : "text-gray-600"
-                          }`}
+                      <FaTrash />
+                    </button>
+                  </div>
+
+                  {/* Listă cu Betting Markets */}
+                  {bet.bettingMarkets.length > 0 && (
+                    <div className="mt-4 space-y-3">
+                      {bet.bettingMarkets.map((market) => (
+                        <div
+                          key={market.id}
+                          className="p-4 bg-gradient-to-b from-gray-700 via-gray-600 to-gray-700 text-white rounded-lg shadow-md mb-4"
                         >
-                          {bettingMarkets.bettingMarkets}
-                        </span>
-                      )}
+                          {/* Totul pe un singur rând: Status, Descriere, Odds, Editare, Ștergere */}
+                          <div className="flex justify-between items-center mb-2">
+                            {/* Status - Stânga */}
+                            <div className="flex-1 text-left">
+                              <label className="block font-semibold text-gray-400">
+                                Status
+                              </label>
+                              <p>{market.status}</p>
+                            </div>
 
-                      {/* Cota pentru BettingMarkets */}
-                      <div className="flex items-center gap-2 ml-4">
-                        <input
-                          type="number"
-                          value={bettingMarketsCotes[bet.id]?.[index] || ""}
-                          onChange={(e) =>
-                            handleBettingMarketsCoteChange(
-                              bet.id,
-                              index,
-                              e.target.value
-                            )
-                          }
-                          onBlur={(e) => {
-                            const updatedValue = e.target.value.replace(
-                              ",",
-                              "."
-                            );
-                            handleBettingMarketsCoteChange(
-                              bet.id,
-                              index,
-                              updatedValue
-                            );
-                          }}
-                          placeholder="Odds"
-                          className="w-20 p-1 border border-gray-300 rounded-lg ml-4"
-                        />
+                            {/* Descriere Betting Market - Centrat */}
+                            <div className="flex-1 text-sm text-center">
+                              <p>{market.title}</p>
+                            </div>
 
-                        {/* <div className="flex gap-2"> */}
-                        <FaEdit
-                          onClick={() =>
-                            setEditingBettingMarkets({
-                              betId: bet.id,
-                              bettingMarketsIndex: index,
-                              newBettingMarketsName:
-                                bettingMarkets.bettingMarkets,
-                            })
-                          }
-                          className="text-blue-600 cursor-pointer hover:text-blue-800 ml-2"
-                        />
-                        <FaTrash
-                          onClick={() => deleteBettingMarkets(bet.id, index)}
-                          className="text-red-600 cursor-pointer hover:text-red-800"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                  <input
-                    type="text"
-                    value={bettingMarketsInputs[bet.id] || ""}
-                    onChange={(e) =>
-                      handleBettingMarketsInputChange(bet.id, e.target.value)
-                    }
-                    placeholder="Add betting markets"
-                    className="w-full p-2 border border-gray-300 rounded-lg mt-4"
-                  />
-                  <button
-                    onClick={() => addBettingMarketsToBet(bet.id)}
-                    className="w-full py-2 bg-blue-600 text-white rounded-lg mt-2"
-                  >
-                    Add Betting Markets
-                  </button>
+                            {/* Odds - Dreapta */}
+                            <div className="flex-1 text-right mr-6">
+                              <label className="block font-semibold text-gray-400">
+                                Odds
+                              </label>
+                              <p className="mr-2">{market.odds}</p>
+                            </div>
 
-                  {/* Cota Totală pe aceeași linie cu statusul betului */}
-                  {bet.bettingMarketss.length > 0 && (
-                    <div className="mt-4 flex items-center justify-between">
-                      <span>
-                        Status:{" "}
-                        {calculateBetStatus(bet.bettingMarketss).toUpperCase()}
-                      </span>
-                      <span className="font-semibold text-gray-800">
-                        Odds: {calculateTotalCote(bet.id).toFixed(2)}
-                      </span>
+                            {/* Distanțare între Odds și Butoane */}
+                            <div className="flex space-x-4 ml-4">
+                              {/* Editare Betting Market */}
+                              <button
+                                onClick={() =>
+                                  editBettingMarket(bet.id, market.id)
+                                }
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <FaEdit />
+                              </button>
+                              {/* Ștergere Betting Market */}
+                              <button
+                                onClick={() =>
+                                  deleteBettingMarket(bet.id, market.id)
+                                }
+                                className="text-red-600 hover:text-red-800"
+                              >
+                                <FaTrash />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
+
+                  {/* Delimitare cu margini între secțiuni */}
+                  <div className="mt-6 border-t border-gray-600 pt-4"></div>
+
+                  {/* Partea de jos a cardului */}
+                  <div className="flex justify-between items-center mt-4 space-x-4">
+                    {/* Status - Stânga jos */}
+                    <div className="flex-1 text-left">
+                      <p className="text-sm font-semibold text-gray-400">
+                        Status
+                      </p>
+                      <p className="text-sm">{bet.status}</p>
+                    </div>
+
+                    {/* Add Betting Market - Centrat */}
+                    <div className="flex-1 text-center">
+                      <button
+                        onClick={() => editBettingMarket(bet.id, null)}
+                        className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg focus:outline-none"
+                      >
+                        Add Betting Market
+                      </button>
+                    </div>
+
+                    {/* Odds - Dreapta jos */}
+                    <div className="flex-1 text-right">
+                      <p className="text-sm font-semibold text-gray-400">
+                        Odds
+                      </p>
+                      <p className="text-sm">{totalOdds.toFixed(2)}</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
+      )}
+
+      {showPopup && (
+        <Popup
+          onClose={() => setShowPopup(false)}
+          onSubmit={submitBettingMarket}
+          betId={popupBetId}
+          marketId={popupMarketId}
+          existingMarket={
+            popupMarketId &&
+            betsByDate[selectedDate]
+              .find((bet) => bet.id === popupBetId)
+              .bettingMarkets.find((market) => market.id === popupMarketId)
+          }
+        />
       )}
     </div>
   );

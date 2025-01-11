@@ -1,6 +1,50 @@
 import React, { useState, useEffect } from "react";
 import { FaEdit, FaTrash } from "react-icons/fa";
 
+const EditBetPopup = ({ onClose, onSubmit, existingTitle, betId }) => {
+  const [title, setTitle] = useState(existingTitle || "");
+
+  const handleSubmit = () => {
+    if (!title.trim()) {
+      alert("Title cannot be empty");
+      return;
+    }
+    onSubmit(betId, title);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50 text-center">
+      <div className="bg-gradient-to-b from-gray-900 via-black to-gray-900 rounded-lg shadow-2xl p-6 w-96">
+        <h2 className="text-2xl font-bold text-green-400 mb-4">
+          Edit Bet Title
+        </h2>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Enter new title"
+          className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-500 mb-6"
+        />
+        <div className="flex justify-between gap-8">
+          <button
+            onClick={handleSubmit}
+            className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-300 ease-in-out transform hover:scale-105 shadow-md w-1/2"
+          >
+            Submit
+          </button>
+          <button
+            onClick={onClose}
+            className="px-5 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition duration-300 ease-in-out transform hover:scale-105 shadow-md w-1/2"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Popup pentru adăugarea/editarera unei piețe de pariu
 const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
   const [bettingMarket, setBettingMarket] = useState(
@@ -112,6 +156,8 @@ const Calendar = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [popupBetId, setPopupBetId] = useState(null);
   const [popupMarketId, setPopupMarketId] = useState(null);
+  const [showEditPopup, setShowEditPopup] = useState(false);
+  const [editBetId, setEditBetId] = useState(null);
 
   // Încărcăm pariurile din localStorage
   useEffect(() => {
@@ -218,6 +264,15 @@ const Calendar = () => {
     setBetsByDate((prev) => ({
       ...prev,
       [selectedDate]: prev[selectedDate].filter((bet) => bet.id !== betId),
+    }));
+  };
+
+  const editBetTitle = (betId, newTitle) => {
+    setBetsByDate((prev) => ({
+      ...prev,
+      [selectedDate]: prev[selectedDate].map((bet) =>
+        bet.id === betId ? { ...bet, title: newTitle } : bet
+      ),
     }));
   };
 
@@ -376,12 +431,23 @@ const Calendar = () => {
                     >
                       {bet.title}
                     </h3>
-                    <button
-                      onClick={() => deleteBet(bet.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      <FaTrash />
-                    </button>
+                    <div className="flex space-x-4">
+                      <button
+                        onClick={() => {
+                          setEditBetId(bet.id);
+                          setShowEditPopup(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        onClick={() => deleteBet(bet.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
                   </div>
 
                   {bet.bettingMarkets.length > 0 && (
@@ -529,6 +595,17 @@ const Calendar = () => {
             betsByDate[selectedDate]
               .find((bet) => bet.id === popupBetId)
               .bettingMarkets.find((market) => market.id === popupMarketId)
+          }
+        />
+      )}
+
+      {showEditPopup && (
+        <EditBetPopup
+          onClose={() => setShowEditPopup(false)}
+          onSubmit={editBetTitle}
+          betId={editBetId}
+          existingTitle={
+            betsByDate[selectedDate]?.find((bet) => bet.id === editBetId)?.title
           }
         />
       )}

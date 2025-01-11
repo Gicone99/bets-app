@@ -112,7 +112,6 @@ const Calendar = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [popupBetId, setPopupBetId] = useState(null);
   const [popupMarketId, setPopupMarketId] = useState(null);
-  const [popupMessage, setPopupMessage] = useState("");
 
   // Încărcăm pariurile din localStorage
   useEffect(() => {
@@ -168,7 +167,6 @@ const Calendar = () => {
     }));
 
     setNewBetTitle("");
-    setPopupMessage("New bet added successfully!");
   };
 
   // Deschide popup-ul pentru a adăuga/edita o piață de pariu
@@ -213,7 +211,6 @@ const Calendar = () => {
       });
       return updatedBets;
     });
-    setPopupMessage("Betting Market updated successfully!");
   };
 
   // Ștergerea unui pariu
@@ -260,6 +257,19 @@ const Calendar = () => {
 
   const hasBets = (date) => {
     return (betsByDate[date] || []).length > 0;
+  };
+
+  const calculateBetStatus = (bettingMarkets) => {
+    if (bettingMarkets.some((market) => market.status === "lost")) {
+      return "lost";
+    }
+    if (bettingMarkets.every((market) => market.status === "won")) {
+      return "won";
+    }
+    if (bettingMarkets.some((market) => market.status === "pending")) {
+      return "pending";
+    }
+    return "unknown";
   };
 
   return (
@@ -309,7 +319,7 @@ const Calendar = () => {
           >
             {date ? date.split("-")[2] : ""}
             {date && betsByDate[date]?.length > 0 && (
-              <div className="mt-2 text-xs text-gray-400">
+              <div className="mt-2 text-xs text-gray-500">
                 {betsByDate[date].length} Bets
               </div>
             )}
@@ -337,7 +347,10 @@ const Calendar = () => {
           </button>
           <div className="mt-4">
             {betsByDate[selectedDate]?.map((bet) => {
-              // Calculăm cotele totale din betting markets
+              // Calculăm statusul actualizat al pariului
+              const updatedStatus = calculateBetStatus(bet.bettingMarkets);
+
+              // Calculăm cotele totale
               const totalOdds = bet.bettingMarkets.reduce((acc, market) => {
                 const odds = parseFloat(market.odds);
                 return acc * odds; // Înmulțim cotele pentru a obține cota finală
@@ -348,12 +361,18 @@ const Calendar = () => {
                   key={bet.id}
                   className="p-6 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-800 text-white rounded-lg shadow-xl mb-4 flex flex-col"
                 >
-                  {/* Titlu Centrat și Butonul de Ștergere pe aceeași linie */}
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-xl font-bold text-center flex-1">
+                    <h3
+                      className={`text-xl font-bold text-center flex-1 ${
+                        updatedStatus === "lost"
+                          ? "text-red-500"
+                          : updatedStatus === "won"
+                          ? "text-green-500"
+                          : "text-gray-300"
+                      }`}
+                    >
                       {bet.title}
                     </h3>
-                    {/* Buton pentru ștergerea betului */}
                     <button
                       onClick={() => deleteBet(bet.id)}
                       className="text-red-600 hover:text-red-800"
@@ -362,7 +381,6 @@ const Calendar = () => {
                     </button>
                   </div>
 
-                  {/* Listă cu Betting Markets */}
                   {bet.bettingMarkets.length > 0 && (
                     <div className="mt-4 space-y-3">
                       {bet.bettingMarkets.map((market) => (
@@ -370,27 +388,54 @@ const Calendar = () => {
                           key={market.id}
                           className="p-4 bg-gradient-to-b from-gray-700 via-gray-600 to-gray-700 text-white rounded-lg shadow-md mb-4"
                         >
-                          {/* Totul pe un singur rând: Status, Descriere, Odds, Editare, Ștergere */}
                           <div className="flex justify-between items-center mb-2">
                             {/* Status - Stânga */}
                             <div className="flex-1 text-left">
-                              <label className="block font-semibold text-gray-400">
+                              <label className="block font-semibold text-gray-500">
                                 Status
                               </label>
-                              <p>{market.status}</p>
+                              <p
+                                className={`${
+                                  market.status === "lost"
+                                    ? "text-red-500"
+                                    : market.status === "won"
+                                    ? "text-green-500"
+                                    : "text-gray-300"
+                                }`}
+                              >
+                                {market.status}
+                              </p>
                             </div>
 
                             {/* Descriere Betting Market - Centrat */}
-                            <div className="flex-1 text-sm text-center">
+                            <div
+                              className={`flex-1 text-sm text-center ${
+                                market.status === "lost"
+                                  ? "text-red-500"
+                                  : market.status === "won"
+                                  ? "text-green-500"
+                                  : "text-gray-300"
+                              }`}
+                            >
                               <p>{market.title}</p>
                             </div>
 
                             {/* Odds - Dreapta */}
                             <div className="flex-1 text-right mr-6">
-                              <label className="block font-semibold text-gray-400">
+                              <label className="block font-semibold text-gray-500">
                                 Odds
                               </label>
-                              <p className="mr-2">{market.odds}</p>
+                              <p
+                                className={`mr-2 ${
+                                  market.status === "lost"
+                                    ? "text-red-500"
+                                    : market.status === "won"
+                                    ? "text-green-500"
+                                    : "text-gray-300"
+                                }`}
+                              >
+                                {market.odds}
+                              </p>
                             </div>
 
                             {/* Distanțare între Odds și Butoane */}
@@ -420,20 +465,24 @@ const Calendar = () => {
                     </div>
                   )}
 
-                  {/* Delimitare cu margini între secțiuni */}
                   <div className="mt-6 border-t border-gray-600 pt-4"></div>
-
-                  {/* Partea de jos a cardului */}
                   <div className="flex justify-between items-center mt-4 space-x-4">
-                    {/* Status - Stânga jos */}
                     <div className="flex-1 text-left">
-                      <p className="text-sm font-semibold text-gray-400">
+                      <p className="text-sm font-semibold text-gray-500">
                         Status
                       </p>
-                      <p className="text-sm">{bet.status}</p>
+                      <p
+                        className={`text-sm ${
+                          updatedStatus === "lost"
+                            ? "text-red-500"
+                            : updatedStatus === "won"
+                            ? "text-green-500"
+                            : "text-gray-300"
+                        }`}
+                      >
+                        {updatedStatus}
+                      </p>
                     </div>
-
-                    {/* Add Betting Market - Centrat */}
                     <div className="flex-1 text-center">
                       <button
                         onClick={() => editBettingMarket(bet.id, null)}
@@ -442,13 +491,21 @@ const Calendar = () => {
                         Add Betting Market
                       </button>
                     </div>
-
-                    {/* Odds - Dreapta jos */}
                     <div className="flex-1 text-right">
-                      <p className="text-sm font-semibold text-gray-400">
+                      <p className="text-sm font-semibold text-gray-500">
                         Odds
                       </p>
-                      <p className="text-sm">{totalOdds.toFixed(2)}</p>
+                      <p
+                        className={`text-sm ${
+                          updatedStatus === "lost"
+                            ? "text-red-500"
+                            : updatedStatus === "won"
+                            ? "text-green-500"
+                            : "text-gray-300"
+                        }`}
+                      >
+                        {totalOdds.toFixed(2)}
+                      </p>
                     </div>
                   </div>
                 </div>

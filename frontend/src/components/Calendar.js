@@ -16,9 +16,7 @@ const EditBetPopup = ({ onClose, onSubmit, existingTitle, betId }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50 text-center">
       <div className="bg-gradient-to-b from-gray-900 via-black to-gray-900 rounded-lg shadow-2xl p-6 w-96">
-        <h2 className="text-2xl font-bold text-green-400 mb-4">
-          Edit Bet Title
-        </h2>
+        <h2 className="text-2xl font-bold text-green-400 mb-4">Bet Title</h2>
         <input
           type="text"
           value={title}
@@ -50,7 +48,7 @@ const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
   const [bettingMarket, setBettingMarket] = useState(
     existingMarket?.title || ""
   );
-  const [status, setStatus] = useState(existingMarket?.status || "pending");
+  const [status, setStatus] = useState(existingMarket?.status || "PENDING");
   const [odds, setOdds] = useState(existingMarket?.odds || "");
 
   const handleSubmit = () => {
@@ -109,9 +107,9 @@ const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
               onChange={(e) => setStatus(e.target.value)}
               className="place-items-center w-full p-3 border-2 border-green-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-800 text-white"
             >
-              <option value="pending">Pending</option>
-              <option value="won">Won</option>
-              <option value="lost">Lost</option>
+              <option value="PENDING">PENDING</option>
+              <option value="WON">WON</option>
+              <option value="LOST">LOST</option>
             </select>
           </div>
           <div className="w-24 ml-6">
@@ -203,7 +201,7 @@ const Calendar = () => {
     const newBet = {
       id: Date.now().toString(),
       title: newBetTitle,
-      status: "pending",
+      status: "PENDING",
       bettingMarkets: [],
     };
 
@@ -316,16 +314,16 @@ const Calendar = () => {
 
   const calculateBetStatus = (bettingMarkets) => {
     if (!bettingMarkets.length) {
-      return "pending"; // biletele fara evenimente sunt în mod implicit "pending"
+      return "PENDING"; // biletele fara evenimente sunt în mod implicit "PENDING"
     }
-    if (bettingMarkets.some((market) => market.status === "lost")) {
-      return "lost";
+    if (bettingMarkets.some((market) => market.status === "LOST")) {
+      return "LOST";
     }
-    if (bettingMarkets.every((market) => market.status === "won")) {
-      return "won";
+    if (bettingMarkets.every((market) => market.status === "WON")) {
+      return "WON";
     }
-    if (bettingMarkets.some((market) => market.status === "pending")) {
-      return "pending";
+    if (bettingMarkets.some((market) => market.status === "PENDING")) {
+      return "PENDING";
     }
     return "unknown";
   };
@@ -386,8 +384,8 @@ const Calendar = () => {
       </div>
 
       {selectedDate && (
-        <div className="mt-6">
-          <h2 className="text-xl font-medium text-green-400 mb-4">
+        <div className="mt-10">
+          <h2 className="text-xl font-medium text-green-400 mb-4 text-center">
             Betting Markets for {selectedDate}
           </h2>
           <input
@@ -395,7 +393,7 @@ const Calendar = () => {
             placeholder="Enter bet title"
             value={newBetTitle}
             onChange={(e) => setNewBetTitle(e.target.value)}
-            className="w-full p-3 mb-4 border-2 border-green-400 rounded-lg bg-gray-800 text-white"
+            className="w-full p-3 mb-4 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center"
           />
           <button
             onClick={addBet}
@@ -422,9 +420,9 @@ const Calendar = () => {
                   <div className="flex justify-between items-center mb-4">
                     <h3
                       className={`text-xl font-bold text-center flex-1 ${
-                        updatedStatus === "lost"
+                        updatedStatus === "LOST"
                           ? "text-red-500"
-                          : updatedStatus === "won"
+                          : updatedStatus === "WON"
                           ? "text-green-500"
                           : "text-gray-300"
                       }`}
@@ -465,9 +463,9 @@ const Calendar = () => {
                               </label>
                               <p
                                 className={`${
-                                  market.status === "lost"
+                                  market.status === "LOST"
                                     ? "text-red-500"
-                                    : market.status === "won"
+                                    : market.status === "WON"
                                     ? "text-green-500"
                                     : "text-gray-300"
                                 }`}
@@ -479,9 +477,9 @@ const Calendar = () => {
                             {/* Descriere Betting Market - Centrat */}
                             <div
                               className={`flex-1 text-sm text-center ${
-                                market.status === "lost"
+                                market.status === "LOST"
                                   ? "text-red-500"
-                                  : market.status === "won"
+                                  : market.status === "WON"
                                   ? "text-green-500"
                                   : "text-gray-300"
                               }`}
@@ -496,9 +494,9 @@ const Calendar = () => {
                               </label>
                               <p
                                 className={`mr-2 ${
-                                  market.status === "lost"
+                                  market.status === "LOST"
                                     ? "text-red-500"
-                                    : market.status === "won"
+                                    : market.status === "WON"
                                     ? "text-green-500"
                                     : "text-gray-300"
                                 }`}
@@ -542,9 +540,9 @@ const Calendar = () => {
                       </p>
                       <p
                         className={`text-sm ${
-                          updatedStatus === "lost"
+                          updatedStatus === "LOST"
                             ? "text-red-500"
-                            : updatedStatus === "won"
+                            : updatedStatus === "WON"
                             ? "text-green-500"
                             : "text-gray-300"
                         }`}
@@ -566,9 +564,9 @@ const Calendar = () => {
                       </p>
                       <p
                         className={`text-sm ${
-                          updatedStatus === "lost"
+                          updatedStatus === "LOST"
                             ? "text-red-500"
-                            : updatedStatus === "won"
+                            : updatedStatus === "WON"
                             ? "text-green-500"
                             : "text-gray-300"
                         }`}

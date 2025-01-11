@@ -260,6 +260,9 @@ const Calendar = () => {
   };
 
   const calculateBetStatus = (bettingMarkets) => {
+    if (!bettingMarkets.length) {
+      return "pending"; // biletele fara evenimente sunt în mod implicit "pending"
+    }
     if (bettingMarkets.some((market) => market.status === "lost")) {
       return "lost";
     }

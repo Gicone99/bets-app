@@ -295,11 +295,11 @@ const Calendar = () => {
     }));
   };
 
-  const editBetTitle = (betId, newTitle) => {
+  const editBetTitle = (betId, newTitle, newStake) => {
     setBetsByDate((prev) => ({
       ...prev,
       [selectedDate]: prev[selectedDate].map((bet) =>
-        bet.id === betId ? { ...bet, title: newTitle } : bet
+        bet.id === betId ? { ...bet, title: newTitle, stake: newStake } : bet
       ),
     }));
   };
@@ -444,7 +444,12 @@ const Calendar = () => {
 
               // Calculate winnings for each bet if stake is provided
               const stake = parseFloat(bet.stake) || 0;
-              const winnings = stake * totalOdds;
+              const winnings =
+                updatedStatus === "LOST" || updatedStatus === "PENDING"
+                  ? 0
+                  : updatedStatus === "WON"
+                  ? stake * totalOdds
+                  : 0;
 
               return (
                 <div

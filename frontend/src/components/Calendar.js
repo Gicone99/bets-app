@@ -1,15 +1,35 @@
 import React, { useState, useEffect } from "react";
 import { FaEdit, FaTrash } from "react-icons/fa";
 
-const EditBetPopup = ({ onClose, onSubmit, existingTitle, betId }) => {
+const EditBetPopup = ({
+  onClose,
+  onSubmit,
+  existingTitle,
+  betId,
+  existingStake,
+}) => {
   const [title, setTitle] = useState(existingTitle || "");
+  const [stake, setStake] = useState(existingStake || "");
+
+  const handleStakeChange = (e) => {
+    let newStake = e.target.value;
+
+    // Replace comma with period for decimal points
+    newStake = newStake.replace(",", ".");
+
+    // Allow only numeric input and two decimal places
+    const regex = /^\d*\.?\d{0,2}$/;
+    if (regex.test(newStake)) {
+      setStake(newStake);
+    }
+  };
 
   const handleSubmit = () => {
-    if (!title.trim()) {
-      alert("Title cannot be empty");
+    if (!title.trim() || !stake.trim()) {
+      alert("Title and Stake cannot be empty");
       return;
     }
-    onSubmit(betId, title);
+    onSubmit(betId, title, stake);
     onClose();
   };
 
@@ -22,6 +42,14 @@ const EditBetPopup = ({ onClose, onSubmit, existingTitle, betId }) => {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Enter new title"
+          className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-500 mb-4"
+        />
+        <h2 className="text-2xl font-bold text-green-400 mb-4">Stake</h2>
+        <input
+          type="text"
+          value={stake}
+          onChange={handleStakeChange}
+          placeholder="Enter stake"
           className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-500 mb-6"
         />
         <div className="flex justify-between gap-8">
@@ -228,7 +256,8 @@ const Calendar = () => {
     marketId,
     bettingMarket,
     status,
-    odds
+    odds,
+    stake
   ) => {
     setBetsByDate((prev) => {
       const updatedBets = { ...prev };
@@ -249,6 +278,7 @@ const Calendar = () => {
                 odds,
               });
             }
+            bet.stake = stake; // Add stake value here
           }
           return bet;
         });
@@ -412,12 +442,32 @@ const Calendar = () => {
                 return acc * odds; // Înmulțim cotele pentru a obține cota finală
               }, 1);
 
+              // Calculate winnings for each bet if stake is provided
+              const stake = parseFloat(bet.stake) || 0;
+              const winnings = stake * totalOdds;
+
               return (
                 <div
                   key={bet.id}
                   className="p-6 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-800 text-white rounded-lg shadow-xl mb-4 flex flex-col"
                 >
                   <div className="flex justify-between items-center mb-4">
+                    <div className="text-left">
+                      <p className="text-sm font-semibold text-gray-500">
+                        Stake
+                      </p>
+                      <p
+                        className={`text-sm ${
+                          updatedStatus === "LOST"
+                            ? "text-red-500"
+                            : updatedStatus === "WON"
+                            ? "text-green-500"
+                            : "text-gray-300"
+                        }`}
+                      >
+                        {stake.toFixed(2)}
+                      </p>
+                    </div>
                     <h3
                       className={`text-xl font-bold text-center flex-1 ${
                         updatedStatus === "LOST"
@@ -531,7 +581,6 @@ const Calendar = () => {
                       ))}
                     </div>
                   )}
-
                   <div className="mt-6 border-t border-gray-600 pt-4"></div>
                   <div className="flex justify-between items-center mt-4 space-x-4">
                     <div className="flex-1 text-left">
@@ -550,6 +599,7 @@ const Calendar = () => {
                         {updatedStatus}
                       </p>
                     </div>
+
                     <div className="flex-1 text-center">
                       <button
                         onClick={() => editBettingMarket(bet.id, null)}
@@ -558,9 +608,10 @@ const Calendar = () => {
                         Add Betting Market
                       </button>
                     </div>
+
                     <div className="flex-1 text-right">
                       <p className="text-sm font-semibold text-gray-500">
-                        Odds
+                        Total Odds
                       </p>
                       <p
                         className={`text-sm ${
@@ -572,6 +623,22 @@ const Calendar = () => {
                         }`}
                       >
                         {totalOdds.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-gray-500">
+                        Winnings
+                      </p>
+                      <p
+                        className={`text-sm ${
+                          updatedStatus === "LOST"
+                            ? "text-red-500"
+                            : updatedStatus === "WON"
+                            ? "text-green-500"
+                            : "text-gray-300"
+                        }`}
+                      >
+                        {winnings.toFixed(2)}
                       </p>
                     </div>
                   </div>

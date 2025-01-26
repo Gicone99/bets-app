@@ -257,13 +257,15 @@ const Calendar = () => {
     bettingMarket,
     status,
     odds,
-    stake
+    newStake
   ) => {
     setBetsByDate((prev) => {
       const updatedBets = { ...prev };
       Object.keys(updatedBets).forEach((date) => {
         updatedBets[date] = updatedBets[date].map((bet) => {
           if (bet.id === betId) {
+            const currentStake = bet.stake || 0;
+
             if (marketId) {
               bet.bettingMarkets = bet.bettingMarkets.map((market) =>
                 market.id === marketId
@@ -278,7 +280,7 @@ const Calendar = () => {
                 odds,
               });
             }
-            bet.stake = stake; // Add stake value here
+            bet.stake = newStake !== undefined ? newStake : currentStake;
           }
           return bet;
         });
@@ -299,7 +301,13 @@ const Calendar = () => {
     setBetsByDate((prev) => ({
       ...prev,
       [selectedDate]: prev[selectedDate].map((bet) =>
-        bet.id === betId ? { ...bet, title: newTitle, stake: newStake } : bet
+        bet.id === betId
+          ? {
+              ...bet,
+              title: newTitle,
+              stake: newStake !== undefined ? parseFloat(newStake) : bet.stake,
+            }
+          : bet
       ),
     }));
   };
@@ -676,6 +684,9 @@ const Calendar = () => {
           betId={editBetId}
           existingTitle={
             betsByDate[selectedDate]?.find((bet) => bet.id === editBetId)?.title
+          }
+          existingStake={
+            betsByDate[selectedDate]?.find((bet) => bet.id === editBetId)?.stake
           }
         />
       )}

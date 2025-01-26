@@ -184,6 +184,7 @@ const Calendar = () => {
   const [popupMarketId, setPopupMarketId] = useState(null);
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [editBetId, setEditBetId] = useState(null);
+  const [balance, setBalance] = useState(200);
 
   // Încărcăm pariurile din localStorage
   useEffect(() => {
@@ -371,6 +372,20 @@ const Calendar = () => {
       <h1 className="text-3xl font-semibold text-center mb-6 text-green-400">
         Betting Calendar
       </h1>
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-6">
+          <div className="text-xl font-medium text-green-400">
+            Balance: {balance.toFixed(2)}
+          </div>
+          <input
+            type="number"
+            step="0.01"
+            value={balance}
+            onChange={(e) => setBalance(parseFloat(e.target.value))}
+            className="w-32 p-3 mb-4 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center"
+          />
+        </div>
+      </div>
       <div className="flex justify-between items-center mb-6">
         <button
           className="text-2xl text-green-400 hover:text-blue-500 transition duration-200"

@@ -42,7 +42,7 @@ const EditBetPopup = ({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Enter new title"
-          className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-500 mb-4"
+          className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-500 mb-4 text-center"
         />
         <h2 className="text-2xl font-bold text-green-400 mb-4">Stake</h2>
         <input
@@ -50,7 +50,7 @@ const EditBetPopup = ({
           value={stake}
           onChange={handleStakeChange}
           placeholder="Enter stake"
-          className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-500 mb-6"
+          className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-500 mb-6 text-center"
         />
         <div className="flex justify-between gap-8">
           <button

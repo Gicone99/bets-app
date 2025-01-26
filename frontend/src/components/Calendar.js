@@ -223,7 +223,16 @@ const Calendar = () => {
     return days;
   };
 
-  // Adăugarea unui nou pariu
+  // Deschide popup-ul pentru a adăuga/edita o piață de pariu
+  const editBettingMarket = (betId, marketId) => {
+    const bet = betsByDate[selectedDate].find((bet) => bet.id === betId);
+    const market = bet.bettingMarkets.find((market) => market.id === marketId);
+    setPopupBetId(betId);
+    setPopupMarketId(marketId);
+    setShowPopup(true);
+  };
+
+  // Adăugarea unui nou pariu cu actualizarea balansului
   const addBet = () => {
     if (!newBetTitle.trim() || !selectedDate) return;
 
@@ -232,6 +241,7 @@ const Calendar = () => {
       title: newBetTitle,
       status: "PENDING",
       bettingMarkets: [],
+      stake: 0, // Stake-ul inițial este 0
     };
 
     setBetsByDate((prev) => ({
@@ -242,16 +252,7 @@ const Calendar = () => {
     setNewBetTitle("");
   };
 
-  // Deschide popup-ul pentru a adăuga/edita o piață de pariu
-  const editBettingMarket = (betId, marketId) => {
-    const bet = betsByDate[selectedDate].find((bet) => bet.id === betId);
-    const market = bet.bettingMarkets.find((market) => market.id === marketId);
-    setPopupBetId(betId);
-    setPopupMarketId(marketId);
-    setShowPopup(true);
-  };
-
-  // Salvează piața de pariu (adăugare/actualizare)
+  // Salvarea unei piețe de pariu cu actualizarea balansului
   const submitBettingMarket = (
     betId,
     marketId,
@@ -262,18 +263,21 @@ const Calendar = () => {
   ) => {
     setBetsByDate((prev) => {
       const updatedBets = { ...prev };
+
       Object.keys(updatedBets).forEach((date) => {
         updatedBets[date] = updatedBets[date].map((bet) => {
           if (bet.id === betId) {
             const currentStake = bet.stake || 0;
 
             if (marketId) {
+              // Actualizare piață de pariu existentă
               bet.bettingMarkets = bet.bettingMarkets.map((market) =>
                 market.id === marketId
                   ? { ...market, title: bettingMarket, status, odds }
                   : market
               );
             } else {
+              // Adăugare piață de pariu nouă
               bet.bettingMarkets.push({
                 id: Date.now().toString(),
                 title: bettingMarket,
@@ -281,13 +285,50 @@ const Calendar = () => {
                 odds,
               });
             }
-            bet.stake = newStake !== undefined ? newStake : currentStake;
+
+            // Actualizare stake și balans
+            if (newStake !== undefined) {
+              const stakeDifference = newStake - currentStake;
+              setBalance((prevBalance) => prevBalance - stakeDifference);
+              bet.stake = newStake;
+            }
+
+            // Verificare câștiguri și actualizare balans
+            const updatedStatus = calculateBetStatus(bet.bettingMarkets);
+            if (updatedStatus === "WON") {
+              const totalOdds = bet.bettingMarkets.reduce(
+                (acc, market) => acc * parseFloat(market.odds),
+                1
+              );
+              const winnings = bet.stake * totalOdds;
+              setBalance((prevBalance) => prevBalance + winnings);
+            }
           }
           return bet;
         });
       });
+
       return updatedBets;
     });
+  };
+
+  // Actualizarea titlului și balansului când se editează un pariu
+  const editBetTitle = (betId, newTitle, newStake) => {
+    setBetsByDate((prev) => ({
+      ...prev,
+      [selectedDate]: prev[selectedDate].map((bet) => {
+        if (bet.id === betId) {
+          const currentStake = bet.stake || 0;
+          if (newStake !== undefined) {
+            const stakeDifference = newStake - currentStake;
+            setBalance((prevBalance) => prevBalance - stakeDifference);
+            bet.stake = newStake;
+          }
+          return { ...bet, title: newTitle };
+        }
+        return bet;
+      }),
+    }));
   };
 
   // Ștergerea unui pariu
@@ -295,21 +336,6 @@ const Calendar = () => {
     setBetsByDate((prev) => ({
       ...prev,
       [selectedDate]: prev[selectedDate].filter((bet) => bet.id !== betId),
-    }));
-  };
-
-  const editBetTitle = (betId, newTitle, newStake) => {
-    setBetsByDate((prev) => ({
-      ...prev,
-      [selectedDate]: prev[selectedDate].map((bet) =>
-        bet.id === betId
-          ? {
-              ...bet,
-              title: newTitle,
-              stake: newStake !== undefined ? parseFloat(newStake) : bet.stake,
-            }
-          : bet
-      ),
     }));
   };
 

@@ -7,6 +7,7 @@ const EditBetPopup = ({
   existingTitle,
   betId,
   existingStake,
+  balance, // Adăugăm balance ca prop
 }) => {
   const [title, setTitle] = useState(existingTitle || "");
   const [stake, setStake] = useState(existingStake || "");
@@ -29,7 +30,16 @@ const EditBetPopup = ({
       alert("Title and Stake cannot be empty");
       return;
     }
-    onSubmit(betId, title, stake);
+
+    // Verificăm dacă stake-ul nou depășește balanța
+    const newStake = parseFloat(stake);
+    if (newStake > balance) {
+      alert("Insufficient funds! Your balance is " + balance);
+      return;
+    }
+
+    // Trimitem datele înapoi la componenta părinte
+    onSubmit(betId, title, newStake);
     onClose();
   };
 
@@ -303,6 +313,11 @@ const Calendar = () => {
       stake: 0, // Stake-ul inițial este 0
     };
 
+    // Verificăm dacă balanța este suficientă pentru a adăuga bet-ul
+    if (!checkBalance(-newBet.stake)) {
+      return; // Opțional: puteți adăuga o logică suplimentară aici
+    }
+
     setBetsByDate((prev) => ({
       ...prev,
       [selectedDate]: [...(prev[selectedDate] || []), newBet],
@@ -354,6 +369,12 @@ const Calendar = () => {
             // Actualizare stake și balans
             if (newStake !== undefined) {
               const stakeDifference = newStake - currentStake;
+
+              // Verificăm dacă balanța este suficientă
+              if (!checkBalance(-stakeDifference)) {
+                return bet; // Nu actualizăm balanța dacă fondurile sunt insuficiente
+              }
+
               setBalance((prevBalance) => prevBalance - stakeDifference);
               bet.stake = newStake;
             }
@@ -366,6 +387,14 @@ const Calendar = () => {
     });
   };
 
+  const checkBalance = (amount) => {
+    if (balance + amount < 0) {
+      alert("Insufficient funds! Your balance is " + balance);
+      return false; // Balanța ar deveni negativă
+    }
+    return true; // Balanța este suficientă
+  };
+
   // Actualizarea titlului și balansului când se editează un pariu
   const editBetTitle = (betId, newTitle, newStake) => {
     setBetsByDate((prev) => ({
@@ -373,11 +402,22 @@ const Calendar = () => {
       [selectedDate]: prev[selectedDate].map((bet) => {
         if (bet.id === betId) {
           const currentStake = bet.stake || 0;
+
+          // Verificăm dacă noua valoare a stake-ului este validă
           if (newStake !== undefined) {
             const stakeDifference = newStake - currentStake;
+
+            // Verificăm dacă balanța este suficientă
+            if (balance - stakeDifference < 0) {
+              alert("Insufficient funds! Your balance is " + balance);
+              return bet; // Nu actualizăm dacă fondurile sunt insuficiente
+            }
+
+            // Actualizăm balanța
             setBalance((prevBalance) => prevBalance - stakeDifference);
             bet.stake = newStake;
           }
+
           return { ...bet, title: newTitle };
         }
         return bet;
@@ -404,6 +444,13 @@ const Calendar = () => {
     console.log("Stake de adăugat înapoi:", stakeToAddBack);
     console.log("Câștiguri de scăzut:", winningsToSubtract);
 
+    // Verificăm dacă balanța ar deveni negativă după ștergere
+    const newBalance = balance + stakeToAddBack - winningsToSubtract;
+    if (newBalance < 0) {
+      alert("Insufficient funds! Your balance is " + newBalance);
+      return; // Nu continuăm dacă balanța ar deveni negativă
+    }
+
     // Ștergem pariul din lista de bets
     setBetsByDate((prev) => {
       const updatedBets = { ...prev };
@@ -411,20 +458,8 @@ const Calendar = () => {
       return updatedBets;
     });
 
-    // Actualizăm balanța într-un apel separat
-    setBalance((prevBalance) => {
-      let newBalance = prevBalance + stakeToAddBack; // Adăugăm stake-ul înapoi la balanță
-
-      // Dacă bet-ul are câștiguri și butonul "Ready" este activat, scădem câștigurile din balanță
-      if (isReady && winningsToSubtract > 0) {
-        newBalance -= winningsToSubtract;
-        console.log("Balanța după scăderea câștigurilor:", newBalance);
-      } else {
-        console.log("Balanța după adăugare:", newBalance);
-      }
-
-      return newBalance;
-    });
+    // Actualizăm balanța
+    setBalance(newBalance);
   };
 
   // Ștergerea unei piețe de pariu
@@ -865,6 +900,7 @@ const Calendar = () => {
           existingStake={
             betsByDate[selectedDate]?.find((bet) => bet.id === editBetId)?.stake
           }
+          balance={balance} // Pasăm balance ca prop
         />
       )}
     </div>

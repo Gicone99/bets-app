@@ -225,6 +225,27 @@ const Calendar = () => {
   };
 
   const handleReadyClick = (bet) => {
+    // Verificăm dacă stake-ul este 0
+    if (parseFloat(bet.stake) === 0) {
+      alert("Stake must not be 0!");
+      return;
+    }
+
+    // Verificăm dacă există cel puțin un betting market
+    if (bet.bettingMarkets.length === 0) {
+      alert("Betting market must not be empty!");
+      return;
+    }
+
+    // Verificăm dacă există cel puțin un betting market cu statusul "PENDING"
+    const hasPendingMarkets = bet.bettingMarkets.some(
+      (market) => market.status === "PENDING"
+    );
+    if (hasPendingMarkets) {
+      alert(bet.title + " has on pending status.");
+      return;
+    }
+
     // Actualizează statusul, total odds și câștigurile la apăsarea butonului "Ready"
     const updatedStatus = calculateBetStatus(bet.bettingMarkets);
 
@@ -284,6 +305,11 @@ const Calendar = () => {
 
     setNewBetTitle("");
     setIsReady(false);
+
+    // Scădem stake-ul din balanță (dacă este cazul)
+    if (newBet.stake > 0) {
+      setBalance((prevBalance) => prevBalance - newBet.stake);
+    }
   };
 
   // Salvarea unei piețe de pariu cu actualizarea balansului
@@ -367,10 +393,33 @@ const Calendar = () => {
 
   // Ștergerea unui pariu
   const deleteBet = (betId) => {
-    setBetsByDate((prev) => ({
-      ...prev,
-      [selectedDate]: prev[selectedDate].filter((bet) => bet.id !== betId),
-    }));
+    console.log("Ștergere bet. Balanța înainte:", balance);
+
+    // Obținem lista de pariuri pentru data selectată
+    const betList = betsByDate[selectedDate] || [];
+    const betToDelete = betList.find((bet) => bet.id === betId);
+
+    if (!betToDelete) {
+      console.warn("Pariul nu a fost găsit!");
+      return;
+    }
+
+    const stakeToAddBack = parseFloat(betToDelete.stake) || 0;
+    console.log("Stake de adăugat înapoi:", stakeToAddBack);
+
+    // Ștergem pariul din lista de bets
+    setBetsByDate((prev) => {
+      const updatedBets = { ...prev };
+      updatedBets[selectedDate] = betList.filter((bet) => bet.id !== betId);
+      return updatedBets;
+    });
+
+    // Actualizăm balanța într-un apel separat
+    setBalance((prevBalance) => {
+      const newBalance = prevBalance + stakeToAddBack;
+      console.log("Balanța după adăugare:", newBalance);
+      return newBalance;
+    });
   };
 
   // Ștergerea unei piețe de pariu
@@ -433,17 +482,8 @@ const Calendar = () => {
         Betting Calendar
       </h1>
       <div className="mb-6">
-        <div className="flex justify-between items-center mb-6">
-          <div className="text-xl font-medium text-green-400">
-            Balance: {balance.toFixed(2)}
-          </div>
-          <input
-            type="number"
-            step="0.01"
-            value={balance}
-            onChange={(e) => setBalance(parseFloat(e.target.value))}
-            className="w-32 p-3 mb-4 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center"
-          />
+        <div className="text-xl font-medium text-green-400 mb-6 text-center">
+          Balance: {balance.toFixed(2)}
         </div>
       </div>
       <div className="flex justify-between items-center mb-6">

@@ -263,6 +263,11 @@ const Calendar = () => {
         ? stake * totalOdds
         : 0;
 
+    // Actualizează balanța doar dacă pariul este câștigător
+    if (updatedStatus === "WON") {
+      setBalance((prevBalance) => prevBalance + winnings);
+    }
+
     // Schimbă statusul cardului la Ready și actualizează butonul
     setIsReady(true);
 
@@ -351,17 +356,6 @@ const Calendar = () => {
               const stakeDifference = newStake - currentStake;
               setBalance((prevBalance) => prevBalance - stakeDifference);
               bet.stake = newStake;
-            }
-
-            // Verificare câștiguri și actualizare balans
-            const updatedStatus = calculateBetStatus(bet.bettingMarkets);
-            if (updatedStatus === "WON") {
-              const totalOdds = bet.bettingMarkets.reduce(
-                (acc, market) => acc * parseFloat(market.odds),
-                1
-              );
-              const winnings = bet.stake * totalOdds;
-              setBalance((prevBalance) => prevBalance + winnings);
             }
           }
           return bet;

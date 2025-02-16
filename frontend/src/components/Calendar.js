@@ -487,7 +487,7 @@ const Calendar = () => {
         Betting Calendar
       </h1>
       <div className="mb-6">
-        <div className="text-xl font-medium text-green-400 mb-6 text-center">
+        <div className="text-xl font-medium text-green-400 mb-6 text-right">
           Balance: {balance.toFixed(2)}
         </div>
       </div>
@@ -546,19 +546,21 @@ const Calendar = () => {
           <h2 className="text-xl font-medium text-green-400 mb-4 text-center">
             Betting Markets for {selectedDate}
           </h2>
-          <input
-            type="text"
-            placeholder="Enter bet title"
-            value={newBetTitle}
-            onChange={(e) => setNewBetTitle(e.target.value)}
-            className="w-full p-3 mb-4 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center"
-          />
-          <button
-            onClick={addBet}
-            className="w-full py-2 bg-green-600 text-white rounded-lg mb-4"
-          >
-            Add Bet
-          </button>
+          <div className="flex justify-between gap-8">
+            <input
+              type="text"
+              placeholder="Enter bet title"
+              value={newBetTitle}
+              onChange={(e) => setNewBetTitle(e.target.value)}
+              className="w-full p-3 mb-4 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center"
+            />
+            <button
+              onClick={addBet}
+              className="bg-green-600 hover:bg-green-700 text-white px-6 rounded-lg focus:outline-none mb-4 whitespace-nowrap"
+            >
+              Add Bet
+            </button>
+          </div>
           <div className="mt-4">
             {betsByDate[selectedDate]?.map((bet) => {
               // Calculăm statusul actualizat al pariului

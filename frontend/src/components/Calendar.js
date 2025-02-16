@@ -195,7 +195,6 @@ const Calendar = () => {
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [editBetId, setEditBetId] = useState(null);
   const [balance, setBalance] = useState(200);
-  const [isReady, setIsReady] = useState(false);
 
   // Încărcăm pariurile din localStorage
   useEffect(() => {
@@ -234,68 +233,72 @@ const Calendar = () => {
     return days;
   };
 
-  const handleReadyClick = (bet) => {
-    // Verificăm dacă stake-ul este 0
-    if (parseFloat(bet.stake) === 0) {
-      alert("Stake must not be 0!");
-      return;
-    }
+  const handleReadyClick = (betId) => {
+    setBetsByDate((prev) => {
+      const updatedBets = { ...prev };
+      const betList = updatedBets[selectedDate] || [];
+      const betToUpdate = betList.find((bet) => bet.id === betId);
 
-    // Verificăm dacă există cel puțin un betting market
-    if (bet.bettingMarkets.length === 0) {
-      alert("Betting market must not be empty!");
-      return;
-    }
+      if (!betToUpdate) {
+        console.warn("Pariul nu a fost găsit!");
+        return prev;
+      }
 
-    // Verificăm dacă există cel puțin un betting market cu statusul "PENDING"
-    const hasPendingMarkets = bet.bettingMarkets.some(
-      (market) => market.status === "PENDING"
-    );
-    if (hasPendingMarkets) {
-      alert(bet.title + " has on pending status.");
-      return;
-    }
+      // Verificăm dacă stake-ul este 0
+      if (parseFloat(betToUpdate.stake) === 0) {
+        alert("Stake must not be 0!");
+        return prev;
+      }
 
-    // Actualizează statusul, total odds și câștigurile la apăsarea butonului "Ready"
-    const updatedStatus = calculateBetStatus(bet.bettingMarkets);
+      // Verificăm dacă există cel puțin un betting market
+      if (betToUpdate.bettingMarkets.length === 0) {
+        alert("Betting market must not be empty!");
+        return prev;
+      }
 
-    // Calculează total odds și câștiguri
-    const totalOdds = bet.bettingMarkets.reduce((acc, market) => {
-      const odds = parseFloat(market.odds);
-      return acc * odds;
-    }, 1);
+      // Verificăm dacă există cel puțin un betting market cu statusul "PENDING"
+      const hasPendingMarkets = betToUpdate.bettingMarkets.some(
+        (market) => market.status === "PENDING"
+      );
+      if (hasPendingMarkets) {
+        alert("Bet cannot be closed because status is pending");
+        return prev;
+      }
 
-    const stake = parseFloat(bet.stake) || 0;
-    const winnings =
-      updatedStatus === "LOST" || updatedStatus === "PENDING"
-        ? 0
-        : updatedStatus === "WON"
-        ? stake * totalOdds
-        : 0;
+      // Calculăm statusul, total odds și winnings
+      const updatedStatus = calculateBetStatus(betToUpdate.bettingMarkets);
+      const totalOdds = betToUpdate.bettingMarkets.reduce((acc, market) => {
+        const odds = parseFloat(market.odds);
+        return acc * odds;
+      }, 1);
 
-    // Actualizează balanța doar dacă pariul este câștigător
-    if (updatedStatus === "WON") {
-      setBalance((prevBalance) => prevBalance + winnings);
-    }
+      const stake = parseFloat(betToUpdate.stake) || 0;
+      const winnings =
+        updatedStatus === "LOST" || updatedStatus === "PENDING"
+          ? 0
+          : updatedStatus === "WON"
+          ? stake * totalOdds
+          : 0;
 
-    // Schimbă statusul cardului la Ready și actualizează butonul
-    setIsReady(true);
+      // Actualizăm balanța doar dacă pariul este câștigător și nu a fost deja procesat
+      if (updatedStatus === "WON" && !betToUpdate.isReady) {
+        setBalance((prevBalance) => prevBalance + winnings);
+      }
 
-    // Salvează noile valori ale statusului, total odds și winnings pentru card
-    setBetsByDate({
-      ...betsByDate,
-      [selectedDate]: betsByDate[selectedDate].map((item) =>
-        item.id === bet.id
-          ? { ...item, updatedStatus, totalOdds, winnings }
-          : item
-      ),
+      // Actualizăm starea bet-ului
+      betToUpdate.isReady = true;
+      betToUpdate.updatedStatus = updatedStatus;
+      betToUpdate.totalOdds = totalOdds;
+      betToUpdate.winnings = winnings;
+
+      return updatedBets;
     });
   };
 
   // Deschide popup-ul pentru a adăuga/edita o piață de pariu
   const editBettingMarket = (betId, marketId) => {
-    const bet = betsByDate[selectedDate].find((bet) => bet.id === betId);
-    const market = bet.bettingMarkets.find((market) => market.id === marketId);
+    // const bet = betsByDate[selectedDate].find((bet) => bet.id === betId);
+    // const market = bet.bettingMarkets.find((market) => market.id === marketId);
     setPopupBetId(betId);
     setPopupMarketId(marketId);
     setShowPopup(true);
@@ -311,12 +314,11 @@ const Calendar = () => {
       status: "PENDING",
       bettingMarkets: [],
       stake: 0, // Stake-ul inițial este 0
+      isReady: false, // Starea inițială pentru butonul "Close Bet"
+      updatedStatus: "PENDING", // Statusul actualizat
+      totalOdds: 1, // Total odds inițial
+      winnings: 0, // Câștiguri inițiale
     };
-
-    // Verificăm dacă balanța este suficientă pentru a adăuga bet-ul
-    if (!checkBalance(-newBet.stake)) {
-      return; // Opțional: puteți adăuga o logică suplimentară aici
-    }
 
     setBetsByDate((prev) => ({
       ...prev,
@@ -324,12 +326,6 @@ const Calendar = () => {
     }));
 
     setNewBetTitle("");
-    setIsReady(false);
-
-    // Scădem stake-ul din balanță (dacă este cazul)
-    if (newBet.stake > 0) {
-      setBalance((prevBalance) => prevBalance - newBet.stake);
-    }
   };
 
   // Salvarea unei piețe de pariu cu actualizarea balansului
@@ -338,8 +334,7 @@ const Calendar = () => {
     marketId,
     bettingMarket,
     status,
-    odds,
-    newStake
+    odds
   ) => {
     setBetsByDate((prev) => {
       const updatedBets = { ...prev };
@@ -347,8 +342,6 @@ const Calendar = () => {
       Object.keys(updatedBets).forEach((date) => {
         updatedBets[date] = updatedBets[date].map((bet) => {
           if (bet.id === betId) {
-            const currentStake = bet.stake || 0;
-
             if (marketId) {
               // Actualizare piață de pariu existentă
               bet.bettingMarkets = bet.bettingMarkets.map((market) =>
@@ -365,19 +358,6 @@ const Calendar = () => {
                 odds,
               });
             }
-
-            // Actualizare stake și balans
-            if (newStake !== undefined) {
-              const stakeDifference = newStake - currentStake;
-
-              // Verificăm dacă balanța este suficientă
-              if (!checkBalance(-stakeDifference)) {
-                return bet; // Nu actualizăm balanța dacă fondurile sunt insuficiente
-              }
-
-              setBalance((prevBalance) => prevBalance - stakeDifference);
-              bet.stake = newStake;
-            }
           }
           return bet;
         });
@@ -385,14 +365,6 @@ const Calendar = () => {
 
       return updatedBets;
     });
-  };
-
-  const checkBalance = (amount) => {
-    if (balance + amount < 0) {
-      alert("Insufficient funds! Your balance is " + balance);
-      return false; // Balanța ar deveni negativă
-    }
-    return true; // Balanța este suficientă
   };
 
   // Actualizarea titlului și balansului când se editează un pariu
@@ -601,23 +573,7 @@ const Calendar = () => {
           </div>
           <div className="mt-4">
             {betsByDate[selectedDate]?.map((bet) => {
-              // Calculăm statusul actualizat al pariului
-              const updatedStatus = calculateBetStatus(bet.bettingMarkets);
-
-              // Calculăm cotele totale
-              const totalOdds = bet.bettingMarkets.reduce((acc, market) => {
-                const odds = parseFloat(market.odds);
-                return acc * odds; // Înmulțim cotele pentru a obține cota finală
-              }, 1);
-
-              // Calculate winnings for each bet if stake is provided
-              const stake = parseFloat(bet.stake) || 0;
-              const winnings =
-                updatedStatus === "LOST" || updatedStatus === "PENDING"
-                  ? 0
-                  : updatedStatus === "WON"
-                  ? stake * totalOdds
-                  : 0;
+              const { updatedStatus, totalOdds, winnings } = bet;
 
               return (
                 <div
@@ -629,26 +585,8 @@ const Calendar = () => {
                       <p className="text-sm font-semibold text-gray-500">
                         Stake
                       </p>
-                      {isReady ? (
-                        <p
-                          className={`text-sm ${
-                            updatedStatus === "LOST"
-                              ? "text-red-500"
-                              : updatedStatus === "WON"
-                              ? "text-green-500"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          {stake.toFixed(2)}
-                        </p>
-                      ) : (
-                        <p>{stake.toFixed(2)}</p>
-                      )}
-                    </div>
-
-                    {isReady ? (
-                      <h3
-                        className={`text-xl font-bold text-center flex-1 ${
+                      <p
+                        className={`text-sm ${
                           updatedStatus === "LOST"
                             ? "text-red-500"
                             : updatedStatus === "WON"
@@ -656,26 +594,34 @@ const Calendar = () => {
                             : "text-gray-300"
                         }`}
                       >
-                        {bet.title}
-                      </h3>
-                    ) : (
-                      <h3>{bet.title}</h3>
-                    )}
+                        {bet.stake.toFixed(2)}
+                      </p>
+                    </div>
+
+                    <h3
+                      className={`text-xl font-bold text-center flex-1 ${
+                        updatedStatus === "LOST"
+                          ? "text-red-500"
+                          : updatedStatus === "WON"
+                          ? "text-green-500"
+                          : "text-gray-300"
+                      }`}
+                    >
+                      {bet.title}
+                    </h3>
 
                     <div className="flex space-x-4">
                       <div>
-                        {isReady ? null : (
-                          <>
-                            <button
-                              onClick={() => {
-                                setEditBetId(bet.id);
-                                setShowEditPopup(true);
-                              }}
-                              className="text-blue-600 hover:text-blue-800"
-                            >
-                              <FaEdit />
-                            </button>
-                          </>
+                        {!bet.isReady && (
+                          <button
+                            onClick={() => {
+                              setEditBetId(bet.id);
+                              setShowEditPopup(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            <FaEdit />
+                          </button>
                         )}
                       </div>
                       <button
@@ -695,7 +641,6 @@ const Calendar = () => {
                           className="p-4 bg-gradient-to-b from-gray-700 via-gray-600 to-gray-700 text-white rounded-lg shadow-md mb-4"
                         >
                           <div className="flex justify-between items-center mb-2">
-                            {/* Status - Stânga */}
                             <div className="flex-1 text-left">
                               <label className="block font-semibold text-gray-500">
                                 Status
@@ -713,7 +658,6 @@ const Calendar = () => {
                               </p>
                             </div>
 
-                            {/* Descriere Betting Market - Centrat */}
                             <div
                               className={`flex-1 text-sm text-center ${
                                 market.status === "LOST"
@@ -726,7 +670,6 @@ const Calendar = () => {
                               <p>{market.title}</p>
                             </div>
 
-                            {/* Odds - Dreapta */}
                             <div className="flex-1 text-right mr-6">
                               <label className="block font-semibold text-gray-500">
                                 Odds
@@ -744,10 +687,8 @@ const Calendar = () => {
                               </p>
                             </div>
 
-                            {/* Distanțare între Odds și Butoane */}
                             <div className="flex space-x-4 ml-4">
-                              {/* Editare Betting Market */}
-                              {isReady ? null : (
+                              {!bet.isReady && (
                                 <>
                                   <button
                                     onClick={() =>
@@ -757,7 +698,6 @@ const Calendar = () => {
                                   >
                                     <FaEdit />
                                   </button>
-                                  {/* Ștergere Betting Market */}
                                   <button
                                     onClick={() =>
                                       deleteBettingMarket(bet.id, market.id)
@@ -774,10 +714,11 @@ const Calendar = () => {
                       ))}
                     </div>
                   )}
+
                   <div className="mt-6 border-t border-gray-600 pt-4"></div>
                   <div className="flex justify-between items-center mt-4 space-x-4">
                     <div className="flex text-left justify-between gap-16">
-                      {isReady ? (
+                      {bet.isReady ? (
                         <button
                           className="bg-gray-600 text-white py-2 px-4 rounded-lg focus:outline-none"
                           disabled
@@ -786,22 +727,20 @@ const Calendar = () => {
                         </button>
                       ) : (
                         <button
-                          onClick={() => handleReadyClick(bet)}
+                          onClick={() => handleReadyClick(bet.id)}
                           className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg focus:outline-none"
                         >
                           Close Bet
                         </button>
                       )}
 
-                      {isReady ? null : (
-                        <>
-                          <button
-                            onClick={() => editBettingMarket(bet.id, null)}
-                            className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg focus:outline-none"
-                          >
-                            Add Betting Market
-                          </button>
-                        </>
+                      {!bet.isReady && (
+                        <button
+                          onClick={() => editBettingMarket(bet.id, null)}
+                          className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg focus:outline-none"
+                        >
+                          Add Betting Market
+                        </button>
                       )}
                     </div>
 
@@ -810,63 +749,51 @@ const Calendar = () => {
                         <p className="text-sm font-semibold text-gray-500">
                           Status
                         </p>
-                        {isReady ? (
-                          <p
-                            className={`text-sm ${
-                              updatedStatus === "LOST"
-                                ? "text-red-500"
-                                : updatedStatus === "WON"
-                                ? "text-green-500"
-                                : "text-gray-300"
-                            }`}
-                          >
-                            {updatedStatus}
-                          </p>
-                        ) : (
-                          <p></p>
-                        )}
+                        <p
+                          className={`text-sm ${
+                            updatedStatus === "LOST"
+                              ? "text-red-500"
+                              : updatedStatus === "WON"
+                              ? "text-green-500"
+                              : "text-gray-300"
+                          }`}
+                        >
+                          {updatedStatus}
+                        </p>
                       </div>
 
                       <div className="text-right">
                         <p className="text-sm font-semibold text-gray-500">
                           Total Odds
                         </p>
-                        {isReady ? (
-                          <p
-                            className={`text-sm ${
-                              updatedStatus === "LOST"
-                                ? "text-red-500"
-                                : updatedStatus === "WON"
-                                ? "text-green-500"
-                                : "text-gray-300"
-                            }`}
-                          >
-                            {totalOdds.toFixed(2)}
-                          </p>
-                        ) : (
-                          <p></p>
-                        )}
+                        <p
+                          className={`text-sm ${
+                            updatedStatus === "LOST"
+                              ? "text-red-500"
+                              : updatedStatus === "WON"
+                              ? "text-green-500"
+                              : "text-gray-300"
+                          }`}
+                        >
+                          {totalOdds.toFixed(2)}
+                        </p>
                       </div>
 
                       <div className="text-right">
                         <p className="text-sm font-semibold text-gray-500">
                           Winnings
                         </p>
-                        {isReady ? (
-                          <p
-                            className={`text-sm ${
-                              updatedStatus === "LOST"
-                                ? "text-red-500"
-                                : updatedStatus === "WON"
-                                ? "text-green-500"
-                                : "text-gray-300"
-                            }`}
-                          >
-                            {winnings.toFixed(2)}
-                          </p>
-                        ) : (
-                          <p></p>
-                        )}
+                        <p
+                          className={`text-sm ${
+                            updatedStatus === "LOST"
+                              ? "text-red-500"
+                              : updatedStatus === "WON"
+                              ? "text-green-500"
+                              : "text-gray-300"
+                          }`}
+                        >
+                          {winnings.toFixed(2)}
+                        </p>
                       </div>
                     </div>
                   </div>

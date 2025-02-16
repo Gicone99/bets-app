@@ -447,7 +447,10 @@ const Calendar = () => {
     // Verificăm dacă balanța ar deveni negativă după ștergere
     const newBalance = balance + stakeToAddBack - winningsToSubtract;
     if (newBalance < 0) {
-      alert("Insufficient funds! Your balance is " + newBalance);
+      alert(
+        "Operation not possible due to negative balance! Your balance cannot be " +
+          newBalance
+      );
       return; // Nu continuăm dacă balanța ar deveni negativă
     }
 

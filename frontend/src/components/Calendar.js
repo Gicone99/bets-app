@@ -399,7 +399,10 @@ const Calendar = () => {
     }
 
     const stakeToAddBack = parseFloat(betToDelete.stake) || 0;
+    const winningsToSubtract = parseFloat(betToDelete.winnings) || 0; // Obținem câștigurile bet-ului
+
     console.log("Stake de adăugat înapoi:", stakeToAddBack);
+    console.log("Câștiguri de scăzut:", winningsToSubtract);
 
     // Ștergem pariul din lista de bets
     setBetsByDate((prev) => {
@@ -410,8 +413,16 @@ const Calendar = () => {
 
     // Actualizăm balanța într-un apel separat
     setBalance((prevBalance) => {
-      const newBalance = prevBalance + stakeToAddBack;
-      console.log("Balanța după adăugare:", newBalance);
+      let newBalance = prevBalance + stakeToAddBack; // Adăugăm stake-ul înapoi la balanță
+
+      // Dacă bet-ul are câștiguri și butonul "Ready" este activat, scădem câștigurile din balanță
+      if (isReady && winningsToSubtract > 0) {
+        newBalance -= winningsToSubtract;
+        console.log("Balanța după scăderea câștigurilor:", newBalance);
+      } else {
+        console.log("Balanța după adăugare:", newBalance);
+      }
+
       return newBalance;
     });
   };

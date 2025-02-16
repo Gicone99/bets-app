@@ -185,6 +185,7 @@ const Calendar = () => {
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [editBetId, setEditBetId] = useState(null);
   const [balance, setBalance] = useState(200);
+  const [isReady, setIsReady] = useState(false);
 
   // Încărcăm pariurile din localStorage
   useEffect(() => {
@@ -223,6 +224,38 @@ const Calendar = () => {
     return days;
   };
 
+  const handleReadyClick = (bet) => {
+    // Actualizează statusul, total odds și câștigurile la apăsarea butonului "Ready"
+    const updatedStatus = calculateBetStatus(bet.bettingMarkets);
+
+    // Calculează total odds și câștiguri
+    const totalOdds = bet.bettingMarkets.reduce((acc, market) => {
+      const odds = parseFloat(market.odds);
+      return acc * odds;
+    }, 1);
+
+    const stake = parseFloat(bet.stake) || 0;
+    const winnings =
+      updatedStatus === "LOST" || updatedStatus === "PENDING"
+        ? 0
+        : updatedStatus === "WON"
+        ? stake * totalOdds
+        : 0;
+
+    // Schimbă statusul cardului la Ready și actualizează butonul
+    setIsReady(true);
+
+    // Salvează noile valori ale statusului, total odds și winnings pentru card
+    setBetsByDate({
+      ...betsByDate,
+      [selectedDate]: betsByDate[selectedDate].map((item) =>
+        item.id === bet.id
+          ? { ...item, updatedStatus, totalOdds, winnings }
+          : item
+      ),
+    });
+  };
+
   // Deschide popup-ul pentru a adăuga/edita o piață de pariu
   const editBettingMarket = (betId, marketId) => {
     const bet = betsByDate[selectedDate].find((bet) => bet.id === betId);
@@ -250,6 +283,7 @@ const Calendar = () => {
     }));
 
     setNewBetTitle("");
+    setIsReady(false);
   };
 
   // Salvarea unei piețe de pariu cu actualizarea balansului
@@ -510,8 +544,26 @@ const Calendar = () => {
                       <p className="text-sm font-semibold text-gray-500">
                         Stake
                       </p>
-                      <p
-                        className={`text-sm ${
+                      {isReady ? (
+                        <p
+                          className={`text-sm ${
+                            updatedStatus === "LOST"
+                              ? "text-red-500"
+                              : updatedStatus === "WON"
+                              ? "text-green-500"
+                              : "text-gray-300"
+                          }`}
+                        >
+                          {stake.toFixed(2)}
+                        </p>
+                      ) : (
+                        <p>{stake.toFixed(2)}</p>
+                      )}
+                    </div>
+
+                    {isReady ? (
+                      <h3
+                        className={`text-xl font-bold text-center flex-1 ${
                           updatedStatus === "LOST"
                             ? "text-red-500"
                             : updatedStatus === "WON"
@@ -519,30 +571,28 @@ const Calendar = () => {
                             : "text-gray-300"
                         }`}
                       >
-                        {stake.toFixed(2)}
-                      </p>
-                    </div>
-                    <h3
-                      className={`text-xl font-bold text-center flex-1 ${
-                        updatedStatus === "LOST"
-                          ? "text-red-500"
-                          : updatedStatus === "WON"
-                          ? "text-green-500"
-                          : "text-gray-300"
-                      }`}
-                    >
-                      {bet.title}
-                    </h3>
+                        {bet.title}
+                      </h3>
+                    ) : (
+                      <h3>{bet.title}</h3>
+                    )}
+
                     <div className="flex space-x-4">
-                      <button
-                        onClick={() => {
-                          setEditBetId(bet.id);
-                          setShowEditPopup(true);
-                        }}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        <FaEdit />
-                      </button>
+                      <div>
+                        {isReady ? null : (
+                          <>
+                            <button
+                              onClick={() => {
+                                setEditBetId(bet.id);
+                                setShowEditPopup(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              <FaEdit />
+                            </button>
+                          </>
+                        )}
+                      </div>
                       <button
                         onClick={() => deleteBet(bet.id)}
                         className="text-red-600 hover:text-red-800"
@@ -612,23 +662,27 @@ const Calendar = () => {
                             {/* Distanțare între Odds și Butoane */}
                             <div className="flex space-x-4 ml-4">
                               {/* Editare Betting Market */}
-                              <button
-                                onClick={() =>
-                                  editBettingMarket(bet.id, market.id)
-                                }
-                                className="text-blue-600 hover:text-blue-800"
-                              >
-                                <FaEdit />
-                              </button>
-                              {/* Ștergere Betting Market */}
-                              <button
-                                onClick={() =>
-                                  deleteBettingMarket(bet.id, market.id)
-                                }
-                                className="text-red-600 hover:text-red-800"
-                              >
-                                <FaTrash />
-                              </button>
+                              {isReady ? null : (
+                                <>
+                                  <button
+                                    onClick={() =>
+                                      editBettingMarket(bet.id, market.id)
+                                    }
+                                    className="text-blue-600 hover:text-blue-800"
+                                  >
+                                    <FaEdit />
+                                  </button>
+                                  {/* Ștergere Betting Market */}
+                                  <button
+                                    onClick={() =>
+                                      deleteBettingMarket(bet.id, market.id)
+                                    }
+                                    className="text-red-600 hover:text-red-800"
+                                  >
+                                    <FaTrash />
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -637,63 +691,98 @@ const Calendar = () => {
                   )}
                   <div className="mt-6 border-t border-gray-600 pt-4"></div>
                   <div className="flex justify-between items-center mt-4 space-x-4">
-                    <div className="flex-1 text-left">
-                      <p className="text-sm font-semibold text-gray-500">
-                        Status
-                      </p>
-                      <p
-                        className={`text-sm ${
-                          updatedStatus === "LOST"
-                            ? "text-red-500"
-                            : updatedStatus === "WON"
-                            ? "text-green-500"
-                            : "text-gray-300"
-                        }`}
-                      >
-                        {updatedStatus}
-                      </p>
+                    <div className="flex text-left justify-between gap-16">
+                      {isReady ? (
+                        <button
+                          className="bg-gray-600 text-white py-2 px-4 rounded-lg focus:outline-none"
+                          disabled
+                        >
+                          Done
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleReadyClick(bet)}
+                          className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg focus:outline-none"
+                        >
+                          Close Bet
+                        </button>
+                      )}
+
+                      {isReady ? null : (
+                        <>
+                          <button
+                            onClick={() => editBettingMarket(bet.id, null)}
+                            className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg focus:outline-none"
+                          >
+                            Add Betting Market
+                          </button>
+                        </>
+                      )}
                     </div>
 
-                    <div className="flex-1 text-center">
-                      <button
-                        onClick={() => editBettingMarket(bet.id, null)}
-                        className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg focus:outline-none"
-                      >
-                        Add Betting Market
-                      </button>
-                    </div>
+                    <div className="flex justify-between gap-12">
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-gray-500">
+                          Status
+                        </p>
+                        {isReady ? (
+                          <p
+                            className={`text-sm ${
+                              updatedStatus === "LOST"
+                                ? "text-red-500"
+                                : updatedStatus === "WON"
+                                ? "text-green-500"
+                                : "text-gray-300"
+                            }`}
+                          >
+                            {updatedStatus}
+                          </p>
+                        ) : (
+                          <p></p>
+                        )}
+                      </div>
 
-                    <div className="flex-1 text-right">
-                      <p className="text-sm font-semibold text-gray-500">
-                        Total Odds
-                      </p>
-                      <p
-                        className={`text-sm ${
-                          updatedStatus === "LOST"
-                            ? "text-red-500"
-                            : updatedStatus === "WON"
-                            ? "text-green-500"
-                            : "text-gray-300"
-                        }`}
-                      >
-                        {totalOdds.toFixed(2)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-gray-500">
-                        Winnings
-                      </p>
-                      <p
-                        className={`text-sm ${
-                          updatedStatus === "LOST"
-                            ? "text-red-500"
-                            : updatedStatus === "WON"
-                            ? "text-green-500"
-                            : "text-gray-300"
-                        }`}
-                      >
-                        {winnings.toFixed(2)}
-                      </p>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-gray-500">
+                          Total Odds
+                        </p>
+                        {isReady ? (
+                          <p
+                            className={`text-sm ${
+                              updatedStatus === "LOST"
+                                ? "text-red-500"
+                                : updatedStatus === "WON"
+                                ? "text-green-500"
+                                : "text-gray-300"
+                            }`}
+                          >
+                            {totalOdds.toFixed(2)}
+                          </p>
+                        ) : (
+                          <p></p>
+                        )}
+                      </div>
+
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-gray-500">
+                          Winnings
+                        </p>
+                        {isReady ? (
+                          <p
+                            className={`text-sm ${
+                              updatedStatus === "LOST"
+                                ? "text-red-500"
+                                : updatedStatus === "WON"
+                                ? "text-green-500"
+                                : "text-gray-300"
+                            }`}
+                          >
+                            {winnings.toFixed(2)}
+                          </p>
+                        ) : (
+                          <p></p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

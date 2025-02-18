@@ -879,6 +879,8 @@ const Calendar = () => {
             calculateDailyProfitLoss(selectedDate)
           )}`}
         >
+          <hr></hr>
+          <br></br>
           {getProfitLossLabel(calculateDailyProfitLoss(selectedDate))}:{" "}
           {calculateDailyProfitLoss(selectedDate).toFixed(2)}
         </div>

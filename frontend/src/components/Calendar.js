@@ -304,6 +304,35 @@ const Calendar = () => {
     setShowPopup(true);
   };
 
+  const getProfitLossColor = (profitLoss) => {
+    if (profitLoss > 0) return "text-green-500"; // Verde pentru profit
+    if (profitLoss < 0) return "text-red-500"; // Roșu pentru pierdere
+    return "text-gray-400"; // Gri pentru nici profit, nici pierdere
+  };
+
+  const getProfitLossLabel = (profitLoss) => {
+    if (profitLoss > 0) return "Today's Profit"; // Profit
+    if (profitLoss < 0) return "Today's Loss"; // Loss
+    return "Today's Result"; // Default (no profit, no loss)
+  };
+
+  const calculateDailyProfitLoss = (date) => {
+    const bets = betsByDate[date] || [];
+    let totalProfitLoss = 0;
+
+    bets.forEach((bet) => {
+      if (bet.isReady) {
+        if (bet.updatedStatus === "WON") {
+          totalProfitLoss += bet.winnings - bet.stake;
+        } else if (bet.updatedStatus === "LOST") {
+          totalProfitLoss -= bet.stake;
+        }
+      }
+    });
+
+    return totalProfitLoss;
+  };
+
   // Adăugarea unui nou pariu cu actualizarea balansului
   const addBet = () => {
     if (!newBetTitle.trim() || !selectedDate) return;
@@ -531,24 +560,34 @@ const Calendar = () => {
       </div>
 
       <div className="grid grid-cols-7 gap-2 mb-4">
-        {generateDays().map((date, index) => (
-          <div
-            key={index}
-            onClick={() => date && setSelectedDate(date)}
-            className={`cursor-pointer p-2 rounded-lg text-center ${
-              date ? "bg-gray-800 text-white" : "bg-transparent"
-            } ${date && selectedDate === date ? "ring-2 ring-green-400" : ""} ${
-              date && hasBets(date) ? "bg-green-500" : ""
-            }`}
-          >
-            {date ? date.split("-")[2] : ""}
-            {date && betsByDate[date]?.length > 0 && (
-              <div className="mt-2 text-xs text-gray-500">
-                {betsByDate[date].length} Bets
-              </div>
-            )}
-          </div>
-        ))}
+        {generateDays().map((date, index) => {
+          const profitLoss = date ? calculateDailyProfitLoss(date) : 0;
+          const bgColor =
+            profitLoss > 0
+              ? "bg-green-500"
+              : profitLoss < 0
+              ? "bg-red-500"
+              : "bg-gray-800";
+
+          return (
+            <div
+              key={index}
+              onClick={() => date && setSelectedDate(date)}
+              className={`cursor-pointer p-2 rounded-lg text-center ${
+                date ? bgColor : "bg-transparent"
+              } ${
+                date && selectedDate === date ? "ring-2 ring-green-400" : ""
+              }`}
+            >
+              {date ? date.split("-")[2] : ""}
+              {date && betsByDate[date]?.length > 0 && (
+                <div className="mt-2 text-xs text-gray-500">
+                  {betsByDate[date].length} Bets
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {selectedDate && (
@@ -832,6 +871,17 @@ const Calendar = () => {
           }
           balance={balance} // Pasăm balance ca prop
         />
+      )}
+
+      {calculateDailyProfitLoss(selectedDate) !== 0 && (
+        <div
+          className={`text-xl font-medium mb-6 text-right ${getProfitLossColor(
+            calculateDailyProfitLoss(selectedDate)
+          )}`}
+        >
+          {getProfitLossLabel(calculateDailyProfitLoss(selectedDate))}:{" "}
+          {calculateDailyProfitLoss(selectedDate).toFixed(2)}
+        </div>
       )}
     </div>
   );

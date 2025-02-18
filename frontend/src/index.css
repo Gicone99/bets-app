@@ -121,3 +121,15 @@
   text-align: left;
   margin: 5px 0;
 }
+
+.bg-green-500 {
+  background-color: #48bb78;
+}
+
+.bg-red-500 {
+  background-color: #f56565;
+}
+
+.bg-gray-800 {
+  background-color: #2d3748;
+}

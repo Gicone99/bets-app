@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { FaEdit, FaTrash } from "react-icons/fa";
+import {
+  FaEdit,
+  FaTrash,
+  FaUser,
+  FaHome,
+  FaSignInAlt,
+  FaUserPlus,
+  FaSignOutAlt,
+} from "react-icons/fa";
+import { useNavigate } from "react-router-dom"; // Pentru navigare
 
 const EditBetPopup = ({
   onClose,
@@ -195,6 +204,12 @@ const Calendar = () => {
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [editBetId, setEditBetId] = useState(null);
   const [balance, setBalance] = useState(200);
+  const navigate = useNavigate();
+  const handleHomeClick = () => navigate("/");
+  const handleLoginClick = () => navigate("/login");
+  const handleRegisterClick = () => navigate("/register");
+  const handleLogoutClick = () => navigate("/logout");
+  const handleUserIconClick = () => navigate("/profile");
 
   // Încărcăm pariurile din localStorage
   useEffect(() => {
@@ -428,8 +443,6 @@ const Calendar = () => {
 
   // Ștergerea unui pariu
   const deleteBet = (betId) => {
-    console.log("Ștergere bet. Balanța înainte:", balance);
-
     // Obținem lista de pariuri pentru data selectată
     const betList = betsByDate[selectedDate] || [];
     const betToDelete = betList.find((bet) => bet.id === betId);
@@ -441,9 +454,6 @@ const Calendar = () => {
 
     const stakeToAddBack = parseFloat(betToDelete.stake) || 0;
     const winningsToSubtract = parseFloat(betToDelete.winnings) || 0; // Obținem câștigurile bet-ului
-
-    console.log("Stake de adăugat înapoi:", stakeToAddBack);
-    console.log("Câștiguri de scăzut:", winningsToSubtract);
 
     // Verificăm dacă balanța ar deveni negativă după ștergere
     const newBalance = balance + stakeToAddBack - winningsToSubtract;
@@ -500,10 +510,6 @@ const Calendar = () => {
 
   const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-  const hasBets = (date) => {
-    return (betsByDate[date] || []).length > 0;
-  };
-
   const calculateBetStatus = (bettingMarkets) => {
     if (!bettingMarkets.length) {
       return "PENDING"; // biletele fara evenimente sunt în mod implicit "PENDING"
@@ -522,14 +528,51 @@ const Calendar = () => {
 
   return (
     <div className="max-w-4xl mx-auto bg-gradient-to-b from-black via-gray-900 to-gray-900 shadow-xl rounded-2xl p-8">
+      <div className="flex justify-between items-center mb-6">
+        {/* Butoanele din stânga */}
+        <div className="flex space-x-4">
+          <button
+            onClick={handleHomeClick}
+            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+          >
+            <FaHome className="mr-2" /> Home
+          </button>
+          <button
+            onClick={handleLoginClick}
+            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+          >
+            <FaSignInAlt className="mr-2" /> Login
+          </button>
+          <button
+            onClick={handleRegisterClick}
+            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+          >
+            <FaUserPlus className="mr-2" /> Register
+          </button>
+          <button
+            onClick={handleLogoutClick}
+            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+          >
+            <FaSignOutAlt className="mr-2" /> Logout
+          </button>
+        </div>
+
+        {/* Butonul pentru User și Balance în dreapta */}
+        <div
+          className="flex flex-col items-center cursor-pointer"
+          onClick={handleUserIconClick}
+        >
+          <FaUser className="text-2xl text-green-400" />
+          <span className="text-sm text-green-400 mt-1">
+            Balance: {balance.toFixed(2)}
+          </span>
+        </div>
+      </div>
+
       <h1 className="text-3xl font-semibold text-center mb-6 text-green-400">
         Betting Calendar
       </h1>
-      <div className="mb-6">
-        <div className="text-xl font-medium text-green-400 mb-6 text-right">
-          Balance: {balance.toFixed(2)}
-        </div>
-      </div>
+
       <div className="flex justify-between items-center mb-6">
         <button
           className="text-2xl text-green-400 hover:text-blue-500 transition duration-200"

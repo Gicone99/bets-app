@@ -133,14 +133,3 @@
 .bg-gray-800 {
   background-color: #2d3748;
 }
-
-/* index.css */
-html.dark {
-  background-color: #1a1a1a;
-  color: #ffffff;
-}
-
-html.light {
-  background-color: #e6e8c4;
-  color: #1a1a1a;
-}

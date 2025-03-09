@@ -7,10 +7,8 @@ import {
   FaSignInAlt,
   FaUserPlus,
   FaSignOutAlt,
-  FaSun,
-  FaMoon,
 } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // Pentru navigare
 
 const EditBetPopup = ({
   onClose,
@@ -206,26 +204,12 @@ const Calendar = () => {
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [editBetId, setEditBetId] = useState(null);
   const [balance, setBalance] = useState(200);
-  const [theme, setTheme] = useState("dark");
   const navigate = useNavigate();
-
-  // Încărcăm tema salvată din localStorage la montarea componentei
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") || "dark";
-    setTheme(savedTheme);
-    document.documentElement.classList.add(savedTheme);
-  }, []);
-
-  // Funcție pentru schimbarea temei
-  const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-
-    // Actualizăm clasele de pe elementul <html>
-    document.documentElement.classList.remove(theme);
-    document.documentElement.classList.add(newTheme);
-  };
+  const handleHomeClick = () => navigate("/");
+  const handleLoginClick = () => navigate("/login");
+  const handleRegisterClick = () => navigate("/register");
+  const handleLogoutClick = () => navigate("/logout");
+  const handleUserIconClick = () => navigate("/profile");
 
   // Încărcăm pariurile din localStorage
   useEffect(() => {
@@ -543,37 +527,30 @@ const Calendar = () => {
   };
 
   return (
-    <div
-      className={`max-w-4xl mx-auto shadow-xl rounded-2xl p-8 ${
-        theme === "dark"
-          ? "bg-gradient-to-b from-black via-gray-900 to-gray-900"
-          : "bg-gradient-to-b from-black-100 via-gray-400 to-gray-400"
-      }`}
-    >
-      {/* Header cu butoane și butonul pentru schimbarea temei */}
+    <div className="max-w-4xl mx-auto bg-gradient-to-b from-black via-gray-900 to-gray-900 shadow-xl rounded-2xl p-8">
       <div className="flex justify-between items-center mb-6">
         {/* Butoanele din stânga */}
         <div className="flex space-x-4">
           <button
-            onClick={() => navigate("/")}
+            onClick={handleHomeClick}
             className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
           >
             <FaHome className="mr-2" /> Home
           </button>
           <button
-            onClick={() => navigate("/login")}
+            onClick={handleLoginClick}
             className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
           >
             <FaSignInAlt className="mr-2" /> Login
           </button>
           <button
-            onClick={() => navigate("/register")}
+            onClick={handleRegisterClick}
             className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
           >
             <FaUserPlus className="mr-2" /> Register
           </button>
           <button
-            onClick={() => navigate("/logout")}
+            onClick={handleLogoutClick}
             className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
           >
             <FaSignOutAlt className="mr-2" /> Logout
@@ -581,42 +558,18 @@ const Calendar = () => {
         </div>
 
         {/* Butonul pentru User și Balance în dreapta */}
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition duration-200"
-          >
-            {theme === "dark" ? (
-              <FaSun className="text-yellow-400" />
-            ) : (
-              <FaMoon className="text-gray-800" />
-            )}
-          </button>
-          <div
-            className="flex flex-col items-center cursor-pointer"
-            onClick={() => navigate("/profile")}
-          >
-            <FaUser
-              className={`text-2xl ${
-                theme === "dark" ? "text-green-400" : "text-green-600"
-              }`}
-            />
-            <span
-              className={`text-sm ${
-                theme === "dark" ? "text-green-400" : "text-green-600"
-              } mt-1`}
-            >
-              Balance: {balance.toFixed(2)}
-            </span>
-          </div>
+        <div
+          className="flex flex-col items-center cursor-pointer"
+          onClick={handleUserIconClick}
+        >
+          <FaUser className="text-2xl text-green-400" />
+          <span className="text-sm text-green-400 mt-1">
+            Balance: {balance.toFixed(2)}
+          </span>
         </div>
       </div>
 
-      <h1
-        className={`text-3xl font-semibold text-center mb-6 ${
-          theme === "dark" ? "text-green-400" : "text-green-600"
-        }`}
-      >
+      <h1 className="text-3xl font-semibold text-center mb-6 text-green-400">
         Betting Calendar
       </h1>
 

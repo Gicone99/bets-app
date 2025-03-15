@@ -7,6 +7,7 @@ import {
   FaSignInAlt,
   FaUserPlus,
   FaSignOutAlt,
+  FaHistory,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom"; // Pentru navigare
 
@@ -210,6 +211,7 @@ const Calendar = () => {
   const handleRegisterClick = () => navigate("/register");
   const handleLogoutClick = () => navigate("/logout");
   const handleUserIconClick = () => navigate("/profile");
+  const handleHistoryClick = () => navigate("/history");
 
   // Încărcăm pariurile din localStorage
   useEffect(() => {
@@ -554,6 +556,13 @@ const Calendar = () => {
             className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
           >
             <FaSignOutAlt className="mr-2" /> Logout
+          </button>
+
+          <button
+            onClick={handleHistoryClick}
+            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+          >
+            <FaHistory className="mr-2" /> History
           </button>
         </div>
 

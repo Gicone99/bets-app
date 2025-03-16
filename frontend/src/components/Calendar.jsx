@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   FaEdit,
   FaTrash,
@@ -8,8 +8,11 @@ import {
   FaUserPlus,
   FaSignOutAlt,
   FaHistory,
+  FaRProject,
 } from "react-icons/fa";
-import { useNavigate } from "react-router-dom"; // Pentru navigare
+import { useNavigate } from "react-router-dom";
+import { BalanceContext } from "../context/BalanceContext";
+import { ProjectsContext } from "../context/ProjectsContext";
 
 const EditBetPopup = ({
   onClose,
@@ -17,18 +20,16 @@ const EditBetPopup = ({
   existingTitle,
   betId,
   existingStake,
-  balance, // Adăugăm balance ca prop
+  balance,
+  projects,
 }) => {
   const [title, setTitle] = useState(existingTitle || "");
   const [stake, setStake] = useState(existingStake || "");
+  const [selectedProject, setSelectedProject] = useState(null);
 
   const handleStakeChange = (e) => {
     let newStake = e.target.value;
-
-    // Replace comma with period for decimal points
     newStake = newStake.replace(",", ".");
-
-    // Allow only numeric input and two decimal places
     const regex = /^\d*\.?\d{0,2}$/;
     if (regex.test(newStake)) {
       setStake(newStake);
@@ -41,14 +42,12 @@ const EditBetPopup = ({
       return;
     }
 
-    // Verificăm dacă stake-ul nou depășește balanța
     const newStake = parseFloat(stake);
     if (newStake > balance) {
       alert("Insufficient funds! Your balance is " + balance);
       return;
     }
 
-    // Trimitem datele înapoi la componenta părinte
     onSubmit(betId, title, newStake);
     onClose();
   };
@@ -57,13 +56,22 @@ const EditBetPopup = ({
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50 text-center">
       <div className="bg-gradient-to-b from-gray-900 via-black to-gray-900 rounded-lg shadow-2xl p-6 w-96">
         <h2 className="text-2xl font-bold text-green-400 mb-4">Bet Title</h2>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Enter new title"
-          className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-500 mb-4 text-center"
-        />
+        <select
+          value={selectedProject ? selectedProject.id : ""}
+          onChange={(e) => {
+            const project = projects.find((p) => p.id === e.target.value);
+            setSelectedProject(project);
+            setTitle(project.name);
+          }}
+          className="w-full p-3 mb-4 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center"
+        >
+          <option value="">Select a project</option>
+          {projects.map((project) => (
+            <option key={project.id} value={project.id}>
+              {project.name}
+            </option>
+          ))}
+        </select>
         <h2 className="text-2xl font-bold text-green-400 mb-4">Stake</h2>
         <input
           type="text"
@@ -204,14 +212,18 @@ const Calendar = () => {
   const [popupMarketId, setPopupMarketId] = useState(null);
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [editBetId, setEditBetId] = useState(null);
-  const [balance, setBalance] = useState(200);
+  const { balance, setBalance } = useContext(BalanceContext);
+  const { projects, setProjects } = useContext(ProjectsContext);
+  const [selectedProject, setSelectedProject] = useState(null);
+
   const navigate = useNavigate();
   const handleHomeClick = () => navigate("/");
   const handleLoginClick = () => navigate("/login");
   const handleRegisterClick = () => navigate("/register");
   const handleLogoutClick = () => navigate("/logout");
-  const handleUserIconClick = () => navigate("/profile");
   const handleHistoryClick = () => navigate("/history");
+  const handleProjectsClick = () => navigate("/projects");
+  const handleUserIconClick = () => navigate("/profile");
 
   // Încărcăm pariurile din localStorage
   useEffect(() => {
@@ -227,6 +239,24 @@ const Calendar = () => {
       localStorage.setItem("betsByDate", JSON.stringify(betsByDate));
     }
   }, [betsByDate]);
+
+  // Încărcăm proiectele din localStorage
+  useEffect(() => {
+    const storedProjects = JSON.parse(localStorage.getItem("projects"));
+    if (storedProjects) {
+      setProjects(storedProjects);
+    }
+  }, []);
+
+  // Salvăm proiectele la fiecare modificare
+  useEffect(() => {
+    localStorage.setItem("projects", JSON.stringify(projects));
+  }, [projects]);
+
+  const handleProjectSelect = (project) => {
+    setSelectedProject(project);
+    setNewBetTitle(project.name);
+  };
 
   const generateDays = () => {
     const year = currentDate.getFullYear();
@@ -564,24 +594,29 @@ const Calendar = () => {
           >
             <FaHistory className="mr-2" /> History
           </button>
-        </div>
 
-        {/* Butonul pentru User și Balance în dreapta */}
-        <div
-          className="flex flex-col items-center cursor-pointer"
-          onClick={handleUserIconClick}
-        >
-          <FaUser className="text-2xl text-green-400" />
-          <span className="text-sm text-green-400 mt-1">
-            Balance: {balance.toFixed(2)}
-          </span>
+          <button
+            onClick={handleProjectsClick}
+            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+          >
+            <FaRProject className="mr-2" /> Projects
+          </button>
+
+          {/* Butonul pentru User și Balance în dreapta */}
+          <button
+            onClick={handleUserIconClick}
+            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+          >
+            <FaUser className="mr-2" /> Profile
+          </button>
         </div>
+        <span className="text-right text-green-400">
+          Balance: {balance.toFixed(2)}
+        </span>
       </div>
-
       <h1 className="text-3xl font-semibold text-center mb-6 text-green-400">
         Betting Calendar
       </h1>
-
       <div className="flex justify-between items-center mb-6">
         <button
           className="text-2xl text-green-400 hover:text-blue-500 transition duration-200"
@@ -602,7 +637,6 @@ const Calendar = () => {
           →
         </button>
       </div>
-
       <div className="grid grid-cols-7 gap-2 mb-4">
         {weekDays.map((day) => (
           <div key={day} className="text-center font-medium text-green-400">
@@ -610,7 +644,6 @@ const Calendar = () => {
           </div>
         ))}
       </div>
-
       <div className="grid grid-cols-7 gap-2 mb-4">
         {generateDays().map((date, index) => {
           const profitLoss = date ? calculateDailyProfitLoss(date) : 0;
@@ -641,20 +674,27 @@ const Calendar = () => {
           );
         })}
       </div>
-
       {selectedDate && (
         <div className="mt-10">
           <h2 className="text-xl font-medium text-green-400 mb-4 text-center">
             Betting Markets for {selectedDate}
           </h2>
           <div className="flex justify-between gap-8">
-            <input
-              type="text"
-              placeholder="Enter bet title"
-              value={newBetTitle}
-              onChange={(e) => setNewBetTitle(e.target.value)}
+            <select
+              value={selectedProject ? selectedProject.id : ""}
+              onChange={(e) => {
+                const project = projects.find((p) => p.id === e.target.value);
+                handleProjectSelect(project);
+              }}
               className="w-full p-3 mb-4 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center"
-            />
+            >
+              <option value="">Select a project</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
             <button
               onClick={addBet}
               className="bg-green-600 hover:bg-green-700 text-white px-6 rounded-lg focus:outline-none mb-4 whitespace-nowrap"
@@ -894,7 +934,6 @@ const Calendar = () => {
           </div>
         </div>
       )}
-
       {showPopup && (
         <Popup
           onClose={() => setShowPopup(false)}
@@ -909,7 +948,7 @@ const Calendar = () => {
           }
         />
       )}
-
+      // Calendar.js
       {showEditPopup && (
         <EditBetPopup
           onClose={() => setShowEditPopup(false)}
@@ -921,10 +960,10 @@ const Calendar = () => {
           existingStake={
             betsByDate[selectedDate]?.find((bet) => bet.id === editBetId)?.stake
           }
-          balance={balance} // Pasăm balance ca prop
+          balance={balance}
+          projects={projects} // Trimitem lista de proiecte
         />
       )}
-
       {calculateDailyProfitLoss(selectedDate) !== 0 && (
         <div
           className={`text-xl font-medium mb-6 text-right ${getProfitLossColor(

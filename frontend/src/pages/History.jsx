@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import {
   LineChart,
   Line,
@@ -15,6 +15,7 @@ import {
 } from "recharts";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { BalanceContext } from "../context/BalanceContext";
 
 const History = () => {
   const [balanceData, setBalanceData] = useState([]); // Date pentru graficul balanței
@@ -26,6 +27,7 @@ const History = () => {
   const [selectedRangeLabel, setSelectedRangeLabel] = useState(""); // Label pentru intervalul selectat
   const [manualStartDate, setManualStartDate] = useState(""); // Input manual pentru data de început
   const [manualEndDate, setManualEndDate] = useState(""); // Input manual pentru data de sfârșit
+  const { balance } = useContext(BalanceContext);
 
   // Culori pentru graficul circular
   const COLORS = ["#10B981", "#EF4444"];
@@ -43,7 +45,7 @@ const History = () => {
     const winLossCount = { won: 0, lost: 0 };
     const transactions = [];
 
-    let currentBalance = 200;
+    let currentBalance = 0;
 
     Object.keys(betsByDate).forEach((date) => {
       const betDate = new Date(date);
@@ -356,7 +358,7 @@ const History = () => {
             <p className="text-green-400 text-xl">
               {balanceData.length > 0
                 ? `${(
-                    balanceData[balanceData.length - 1].balance - 200
+                    balanceData[balanceData.length - 1].balance - balance
                   ).toFixed(2)}€`
                 : "0€"}
             </p>

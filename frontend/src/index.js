@@ -14,8 +14,8 @@ import Logout from "./pages/Logout";
 import History from "./pages/History";
 import Projects from "./pages/Projects";
 import Profile from "./pages/Profile";
-import { BalanceProvider } from "./context/BalanceContext"; // Importă BalanceProvider
-import { ProjectsProvider } from "./context/ProjectsContext"; // Importă ProjectsProvider
+import { BalanceProvider } from "./context/BalanceContext";
+import { ProjectsProvider } from "./context/ProjectsContext";
 
 const router = createBrowserRouter([
   {
@@ -62,11 +62,7 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <BalanceProvider>
-      {" "}
-      {/* Învelește aplicația în BalanceProvider */}
       <ProjectsProvider>
-        {" "}
-        {/* Învelește aplicația în ProjectsProvider */}
         <RouterProvider router={router} />
       </ProjectsProvider>
     </BalanceProvider>

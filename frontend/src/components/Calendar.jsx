@@ -25,7 +25,9 @@ const EditBetPopup = ({
 }) => {
   const [title, setTitle] = useState(existingTitle || "");
   const [stake, setStake] = useState(existingStake || "");
-  const [selectedProject, setSelectedProject] = useState(null);
+  const [selectedProject, setSelectedProject] = useState(() => {
+    return projects.find((project) => project.name === existingTitle) || null;
+  });
 
   const handleStakeChange = (e) => {
     let newStake = e.target.value;
@@ -65,7 +67,7 @@ const EditBetPopup = ({
           }}
           className="w-full p-3 mb-4 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center"
         >
-          <option value="">Select a project</option>
+          {!selectedProject && <option value="">Select a project</option>}
           {projects.map((project) => (
             <option key={project.id} value={project.id}>
               {project.name}
@@ -254,8 +256,13 @@ const Calendar = () => {
   }, [projects]);
 
   const handleProjectSelect = (project) => {
-    setSelectedProject(project);
-    setNewBetTitle(project.name);
+    if (project) {
+      setSelectedProject(project);
+      setNewBetTitle(project.name);
+    } else {
+      setSelectedProject(null);
+      setNewBetTitle("");
+    }
   };
 
   const generateDays = () => {
@@ -382,7 +389,7 @@ const Calendar = () => {
 
   // Adăugarea unui nou pariu cu actualizarea balansului
   const addBet = () => {
-    if (!newBetTitle.trim() || !selectedDate) return;
+    if (!newBetTitle.trim() || !selectedDate || !selectedProject) return;
 
     const newBet = {
       id: Date.now().toString(),
@@ -402,6 +409,7 @@ const Calendar = () => {
     }));
 
     setNewBetTitle("");
+    setSelectedProject(null); // Resetează selecția proiectului după adăugarea pariului
   };
 
   // Salvarea unei piețe de pariu cu actualizarea balansului
@@ -684,17 +692,29 @@ const Calendar = () => {
               value={selectedProject ? selectedProject.id : ""}
               onChange={(e) => {
                 const project = projects.find((p) => p.id === e.target.value);
-                handleProjectSelect(project);
+                setSelectedProject(project);
+                setNewBetTitle(project.name);
               }}
               className="w-full p-3 mb-4 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center"
             >
-              <option value="">Select a project</option>
+              {!selectedProject && <option value="">Select a project</option>}
               {projects.map((project) => (
                 <option key={project.id} value={project.id}>
                   {project.name}
                 </option>
               ))}
             </select>
+            {selectedProject && (
+              <button
+                onClick={() => {
+                  setSelectedProject(null);
+                  setNewBetTitle("");
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white px-6 rounded-lg focus:outline-none mb-4 whitespace-nowrap"
+              >
+                Clear Selection
+              </button>
+            )}
             <button
               onClick={addBet}
               className="bg-green-600 hover:bg-green-700 text-white px-6 rounded-lg focus:outline-none mb-4 whitespace-nowrap"
@@ -948,7 +968,6 @@ const Calendar = () => {
           }
         />
       )}
-      // Calendar.js
       {showEditPopup && (
         <EditBetPopup
           onClose={() => setShowEditPopup(false)}

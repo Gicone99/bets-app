@@ -29,7 +29,7 @@ const History = () => {
   const [selectedRangeLabel, setSelectedRangeLabel] = useState("");
   const [manualStartDate, setManualStartDate] = useState("");
   const [manualEndDate, setManualEndDate] = useState("");
-  const [selectedProjects, setSelectedProjects] = useState(["Toate"]);
+  const [selectedProjects, setSelectedProjects] = useState(["All"]);
   const { balancing } = useContext(BalanceContext);
   const { projects } = useContext(ProjectsContext);
 
@@ -94,7 +94,7 @@ const History = () => {
 
         bets.forEach((bet) => {
           if (
-            selectedProjects.includes("Toate") ||
+            selectedProjects.includes("All") ||
             selectedProjects.includes(bet.title)
           ) {
             if (bet.isReady) {
@@ -154,20 +154,34 @@ const History = () => {
 
   // Gestionează selectarea proiectelor
   const handleProjectSelect = (e) => {
-    const selectedOptions = Array.from(e.target.selectedOptions).map(
-      (option) => option.value
-    );
-    setSelectedProjects(selectedOptions);
+    const selectedOption = e.target.value;
+    setSelectedProjects([selectedOption]); // Actualizează starea cu un singur proiect
   };
 
-  // Butoane rapide pentru intervale comune
+  // Gestionează selectarea intervalului de timp din dropdown
   const handleQuickRange = (range) => {
     const today = new Date();
     let start, end;
 
     switch (range) {
+      case "today":
+        start = new Date(today);
+        end = new Date(today);
+        break;
+      case "thisWeek":
+        start = new Date(today.setDate(today.getDate() - today.getDay()));
+        end = new Date(today.setDate(today.getDate() + 6));
+        break;
+      case "thisMonth":
+        start = new Date(today.getFullYear(), today.getMonth(), 1);
+        end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        break;
+      case "thisYear":
+        start = new Date(today.getFullYear(), 0, 1);
+        end = new Date(today.getFullYear(), 11, 31);
+        break;
       case "lastWeek":
-        start = new Date(today.setDate(today.getDate() - today.getDay() - 6));
+        start = new Date(today.setDate(today.getDate() - today.getDay() - 7));
         end = new Date(today.setDate(today.getDate() + 6));
         break;
       case "lastMonth":
@@ -208,9 +222,7 @@ const History = () => {
         `Interval selectat: ${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
       );
     } else {
-      alert(
-        "Date invalide! Asigură-te că data de început este mai mică sau egală cu data de sfârșit."
-      );
+      alert("Date invalide! Begin Date must be lower than End Date.");
     }
   };
 
@@ -230,48 +242,11 @@ const History = () => {
     >
       <h1 className="text-2xl font-bold mb-4 text-green-400">History</h1>
 
-      {/* Selector de proiecte */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Filter by Projects</h2>
-        <select
-          multiple
-          value={selectedProjects}
-          onChange={handleProjectSelect}
-          className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white"
-        >
-          <option value="Toate">Toate</option>
-          {projects.map((project) => (
-            <option key={project.id} value={project.name}>
-              {project.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Afișează proiectele selectate */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Selected Projects</h2>
-        <div className="flex flex-wrap gap-2">
-          {selectedProjects.map((project) => (
-            <motion.span
-              key={project}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.3 }}
-              className="bg-green-600 text-white px-3 py-1 rounded-lg"
-            >
-              {project}
-            </motion.span>
-          ))}
-        </div>
-      </div>
-
-      {/* Selector de interval de timp */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Select Date Range</h2>
-        <div className="flex flex-col space-y-4 max-w-xs mx-auto">
-          {/* Calendar pentru selecția intervalului */}
-          <div className="bg-gray-800 p-2 rounded-lg">
+      {/* Container principal pentru calendar și controale */}
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Calendar */}
+        <div className="lg:w-1/2">
+          <div className="bg-gray-800 p-4 rounded-lg">
             <DatePicker
               selected={startDate}
               onChange={handleDateChange}
@@ -282,68 +257,104 @@ const History = () => {
               className="bg-gray-800 text-white"
             />
           </div>
+        </div>
 
-          {/* Input-uri manuale pentru interval */}
-          <div className="flex flex-col space-y-2">
-            <div className="flex flex-col">
-              <label className="text-gray-400 mb-1">Data de început</label>
-              <input
-                type="date"
-                value={manualStartDate}
-                onChange={(e) => setManualStartDate(e.target.value)}
-                className="bg-gray-800 text-white p-2 rounded-lg"
-              />
+        {/* Controale în dreapta calendarului */}
+        <div className="lg:w-1/2 space-y-6">
+          {/* Begin Date, End Date și butonul Aplică */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">Select Date Range</h2>
+            <div className="flex flex-col space-y-2">
+              <div className="flex flex-col">
+                <label className="text-gray-400 mb-1">Begin Date</label>
+                <input
+                  type="date"
+                  value={manualStartDate}
+                  onChange={(e) => setManualStartDate(e.target.value)}
+                  className="bg-gray-800 text-white p-2 rounded-lg"
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-gray-400 mb-1">End Date</label>
+                <input
+                  type="date"
+                  value={manualEndDate}
+                  onChange={(e) => setManualEndDate(e.target.value)}
+                  className="bg-gray-800 text-white p-2 rounded-lg"
+                />
+              </div>
+              <button
+                onClick={handleManualRangeSubmit}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+              >
+                Aplică
+              </button>
             </div>
-            <div className="flex flex-col">
-              <label className="text-gray-400 mb-1">Data de sfârșit</label>
-              <input
-                type="date"
-                value={manualEndDate}
-                onChange={(e) => setManualEndDate(e.target.value)}
-                className="bg-gray-800 text-white p-2 rounded-lg"
-              />
-            </div>
-            <button
-              onClick={handleManualRangeSubmit}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
-            >
-              Aplică
-            </button>
           </div>
 
-          {/* Butoane rapide pentru intervale comune */}
-          <div className="flex flex-col space-y-2">
-            <button
-              onClick={() => handleQuickRange("lastWeek")}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+          {/* Select Time Range */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">Select Time Range</h2>
+            <select
+              onChange={(e) => handleQuickRange(e.target.value)}
+              className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white"
             >
-              Last Week (Mon-Sun)
-            </button>
-            <button
-              onClick={() => handleQuickRange("lastMonth")}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
-            >
-              Last Month
-            </button>
-            <button
-              onClick={() => handleQuickRange("lastYear")}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
-            >
-              Last Year
-            </button>
+              <option value="">All</option>
+              <option value="today">Today</option>
+              <option value="thisWeek">This Week</option>
+              <option value="thisMonth">This Month</option>
+              <option value="thisYear">This Year</option>
+              <option value="lastWeek">Last Week</option>
+              <option value="lastMonth">Last Month</option>
+              <option value="lastYear">Last Year</option>
+            </select>
+            {/* Afișează intervalul selectat */}
+            {selectedRangeLabel && (
+              <div className="mt-2">
+                <p className="text-green-400 text-sm">{selectedRangeLabel}</p>
+              </div>
+            )}
           </div>
 
-          {/* Label pentru intervalul selectat */}
-          {selectedRangeLabel && (
-            <div className="mt-2">
-              <p className="text-green-400 text-sm">{selectedRangeLabel}</p>
+          {/* Select Project și Selected Projects */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">Select Project</h2>
+            <select
+              value={selectedProjects[0]}
+              onChange={handleProjectSelect}
+              className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white"
+            >
+              <option value="All">All</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.name}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Afișează proiectele selectate */}
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">Selected Projects</h2>
+            <div className="flex flex-wrap gap-2">
+              {selectedProjects.map((project) => (
+                <motion.span
+                  key={project}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-green-600 text-white px-3 py-1 rounded-lg"
+                >
+                  {project}
+                </motion.span>
+              ))}
             </div>
-          )}
+          </div>
         </div>
       </div>
 
       {/* Grafic balanță */}
-      <div className="mb-6">
+      <div className="mt-8">
         <h2 className="text-lg font-semibold mb-2">Balance Evolution</h2>
         <div className="overflow-x-auto">
           <LineChart
@@ -369,7 +380,7 @@ const History = () => {
       </div>
 
       {/* Grafic profit/pierdere */}
-      <div className="mb-6">
+      <div className="mt-8">
         <h2 className="text-lg font-semibold mb-2">Profit & Loss</h2>
         <div className="overflow-x-auto">
           <BarChart
@@ -396,7 +407,7 @@ const History = () => {
       </div>
 
       {/* Statistici */}
-      <div className="mb-6">
+      <div className="mt-8">
         <h2 className="text-lg font-semibold mb-2">Statistics</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="p-4 bg-gray-800 rounded-lg">
@@ -428,7 +439,7 @@ const History = () => {
       </div>
 
       {/* Grafic circular (Pie Chart) */}
-      <div className="mb-6">
+      <div className="mt-8">
         <h2 className="text-lg font-semibold mb-2">Win/Loss Ratio</h2>
         <div className="overflow-x-auto">
           <PieChart width={400} height={300}>
@@ -462,7 +473,7 @@ const History = () => {
       </div>
 
       {/* Istoric tranzacții */}
-      <div>
+      <div className="mt-8">
         <h2 className="text-lg font-semibold mb-2">Transaction History</h2>
         <div className="overflow-x-auto">
           <table className="min-w-full bg-gray-800 rounded-lg">

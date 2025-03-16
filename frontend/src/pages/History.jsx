@@ -155,6 +155,13 @@ const History = () => {
     processBetsData(storedBets, start, end);
   };
 
+  const sortedBalanceData = [...balanceData].sort(
+    (a, b) => new Date(a.date) - new Date(b.date)
+  );
+  const sortedProfitLossData = [...profitLossData].sort(
+    (a, b) => new Date(a.date) - new Date(b.date)
+  );
+
   // Actualizează intervalul atunci când se introduc date manuale
   const handleManualRangeSubmit = () => {
     const start = new Date(manualStartDate);
@@ -263,12 +270,27 @@ const History = () => {
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-2">Balance Evolution</h2>
         <div className="overflow-x-auto">
-          <LineChart width={600} height={300} data={balanceData}>
-            <XAxis dataKey="date" stroke="#6B7280" />
-            <YAxis stroke="#6B7280" />
+          <LineChart
+            width={600}
+            height={300}
+            data={sortedBalanceData}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            style={{ background: "#1F2937", borderRadius: "8px" }} // Fundal întunecat
+          >
+            <XAxis
+              dataKey="date"
+              stroke="#6B7280"
+              tick={{ fill: "#6B7280" }} // Culoare text axa X
+            />
+            <YAxis stroke="#6B7280" tick={{ fill: "#6B7280" }} />{" "}
+            {/* Culoare text axa Y */}
             <CartesianGrid stroke="#374151" strokeDasharray="5 5" />
             <Tooltip
-              contentStyle={{ backgroundColor: "#1F2937", border: "none" }}
+              contentStyle={{
+                backgroundColor: "#1F2937",
+                border: "none",
+                color: "#FFFFFF",
+              }} // Stil tooltip
             />
             <Legend />
             <Line
@@ -286,16 +308,35 @@ const History = () => {
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-2">Profit & Loss</h2>
         <div className="overflow-x-auto">
-          <BarChart width={600} height={300} data={profitLossData}>
-            <XAxis dataKey="date" stroke="#6B7280" />
-            <YAxis stroke="#6B7280" />
+          <BarChart
+            width={600}
+            height={300}
+            data={sortedProfitLossData}
+            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            style={{ background: "#1F2937", borderRadius: "8px" }} // Fundal întunecat
+          >
+            <XAxis
+              dataKey="date"
+              stroke="#6B7280"
+              tick={{ fill: "#6B7280" }} // Culoare text axa X
+            />
+            <YAxis stroke="#6B7280" tick={{ fill: "#6B7280" }} />{" "}
+            {/* Culoare text axa Y */}
             <CartesianGrid stroke="#374151" strokeDasharray="5 5" />
             <Tooltip
-              contentStyle={{ backgroundColor: "#1F2937", border: "none" }}
+              contentStyle={{
+                backgroundColor: "#1F2937",
+                border: "none",
+                color: "#FFFFFF",
+              }} // Stil tooltip
             />
             <Legend />
-            <Bar dataKey="netProfitLoss" name="Result">
-              {profitLossData.map((entry, index) => (
+            <Bar
+              dataKey="netProfitLoss"
+              name="Result"
+              barSize={20} // Lățimea barelor
+            >
+              {sortedProfitLossData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={entry.netProfitLoss >= 0 ? "#10B981" : "#EF4444"}

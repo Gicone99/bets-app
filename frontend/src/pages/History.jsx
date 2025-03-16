@@ -16,20 +16,23 @@ import {
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { BalanceContext } from "../context/BalanceContext";
+import { ProjectsContext } from "../context/ProjectsContext";
+import { motion } from "framer-motion"; // Pentru animații
 
 const History = () => {
-  const [balanceData, setBalanceData] = useState([]); // Date pentru graficul balanței
-  const [profitLossData, setProfitLossData] = useState([]); // Date pentru graficul profit/pierdere
-  const [pieData, setPieData] = useState([]); // Date pentru graficul circular (Pie Chart)
-  const [transactionHistory, setTransactionHistory] = useState([]); // Istoricul tranzacțiilor
-  const [startDate, setStartDate] = useState(null); // Data de început
-  const [endDate, setEndDate] = useState(null); // Data de sfârșit
-  const [selectedRangeLabel, setSelectedRangeLabel] = useState(""); // Label pentru intervalul selectat
-  const [manualStartDate, setManualStartDate] = useState(""); // Input manual pentru data de început
-  const [manualEndDate, setManualEndDate] = useState(""); // Input manual pentru data de sfârșit
-  const { balance } = useContext(BalanceContext);
+  const [balanceData, setBalanceData] = useState([]);
+  const [profitLossData, setProfitLossData] = useState([]);
+  const [pieData, setPieData] = useState([]);
+  const [transactionHistory, setTransactionHistory] = useState([]);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [selectedRangeLabel, setSelectedRangeLabel] = useState("");
+  const [manualStartDate, setManualStartDate] = useState("");
+  const [manualEndDate, setManualEndDate] = useState("");
+  const [selectedProjects, setSelectedProjects] = useState(["Toate"]); // Implicit, selectează "Toate"
+  const { balancing } = useContext(BalanceContext);
+  const { projects } = useContext(ProjectsContext);
 
-  // Culori pentru graficul circular
   const COLORS = ["#10B981", "#EF4444"];
 
   // Încarcă datele din localStorage la montarea componentei
@@ -40,12 +43,17 @@ const History = () => {
 
   // Procesează datele din `betsByDate` pentru a genera graficele și statisticile
   const processBetsData = (betsByDate, start = null, end = null) => {
+    if (!betsByDate || typeof betsByDate !== "object") {
+      console.error("Invalid bets data");
+      return;
+    }
+
     const balanceHistory = [];
     const profitLossHistory = [];
     const winLossCount = { won: 0, lost: 0 };
     const transactions = [];
 
-    let currentBalance = 0;
+    let currentBalance = balancing || 0; // Folosește balanța inițială din context
 
     Object.keys(betsByDate).forEach((date) => {
       const betDate = new Date(date);
@@ -55,25 +63,31 @@ const History = () => {
         let dailyLoss = 0;
 
         bets.forEach((bet) => {
-          if (bet.isReady) {
-            if (bet.updatedStatus === "WON") {
-              dailyProfit += bet.winnings - bet.stake;
-              winLossCount.won += 1;
-            } else if (bet.updatedStatus === "LOST") {
-              dailyLoss += bet.stake;
-              winLossCount.lost += 1;
-            }
+          // Filtrează după proiectele selectate sau afișează toate dacă este selectat "Toate"
+          if (
+            selectedProjects.includes("Toate") ||
+            selectedProjects.includes(bet.title)
+          ) {
+            if (bet.isReady) {
+              if (bet.updatedStatus === "WON") {
+                dailyProfit += bet.winnings - bet.stake;
+                winLossCount.won += 1;
+              } else if (bet.updatedStatus === "LOST") {
+                dailyLoss += bet.stake;
+                winLossCount.lost += 1;
+              }
 
-            transactions.push({
-              id: bet.id,
-              date,
-              type: bet.updatedStatus === "WON" ? "Bet Won" : "Bet Lost",
-              amount:
-                bet.updatedStatus === "WON"
-                  ? `+${bet.winnings.toFixed(2)}€`
-                  : `-${bet.stake.toFixed(2)}€`,
-              details: bet.title,
-            });
+              transactions.push({
+                id: bet.id,
+                date,
+                type: bet.updatedStatus === "WON" ? "Bet Won" : "Bet Lost",
+                amount:
+                  bet.updatedStatus === "WON"
+                    ? `+${(bet.winnings - bet.stake).toFixed(2)}€`
+                    : `-${bet.stake.toFixed(2)}€`,
+                details: bet.title,
+              });
+            }
           }
         });
 
@@ -95,7 +109,7 @@ const History = () => {
     setTransactionHistory(transactions);
   };
 
-  // Actualizează datele atunci când se schimbă intervalul selectat
+  // Actualizează datele atunci când se schimbă intervalul selectat sau proiectele selectate
   const handleDateChange = (dates) => {
     const [start, end] = dates;
     setStartDate(start);
@@ -115,6 +129,18 @@ const History = () => {
     processBetsData(storedBets, start, end);
   };
 
+  // Gestionează selectarea proiectelor
+  const handleProjectSelect = (e) => {
+    const selectedOptions = Array.from(e.target.selectedOptions).map(
+      (option) => option.value
+    );
+    setSelectedProjects(selectedOptions);
+
+    // Re-procesează datele pentru noile proiecte selectate
+    const storedBets = JSON.parse(localStorage.getItem("betsByDate")) || {};
+    processBetsData(storedBets, startDate, endDate);
+  };
+
   // Butoane rapide pentru intervale comune
   const handleQuickRange = (range) => {
     const today = new Date();
@@ -122,19 +148,16 @@ const History = () => {
 
     switch (range) {
       case "lastWeek":
-        // Săptămâna anterioară (luni până duminică)
-        start = new Date(today.setDate(today.getDate() - today.getDay() - 6)); // Luni săptămâna trecută
-        end = new Date(today.setDate(today.getDate() + 6)); // Duminică săptămâna trecută
+        start = new Date(today.setDate(today.getDate() - today.getDay() - 6));
+        end = new Date(today.setDate(today.getDate() + 6));
         break;
       case "lastMonth":
-        // Luna anterioară (de la prima până la ultima zi)
-        start = new Date(today.getFullYear(), today.getMonth() - 1, 1); // Prima zi a lunii anterioare
-        end = new Date(today.getFullYear(), today.getMonth(), 0); // Ultima zi a lunii anterioare
+        start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        end = new Date(today.getFullYear(), today.getMonth(), 0);
         break;
       case "lastYear":
-        // Ultimul an (de la 1 ianuarie până la 31 decembrie)
-        start = new Date(today.getFullYear() - 1, 0, 1); // 1 ianuarie anul trecut
-        end = new Date(today.getFullYear() - 1, 11, 31); // 31 decembrie anul trecut
+        start = new Date(today.getFullYear() - 1, 0, 1);
+        end = new Date(today.getFullYear() - 1, 11, 31);
         break;
       default:
         start = null;
@@ -156,13 +179,6 @@ const History = () => {
     const storedBets = JSON.parse(localStorage.getItem("betsByDate")) || {};
     processBetsData(storedBets, start, end);
   };
-
-  const sortedBalanceData = [...balanceData].sort(
-    (a, b) => new Date(a.date) - new Date(b.date)
-  );
-  const sortedProfitLossData = [...profitLossData].sort(
-    (a, b) => new Date(a.date) - new Date(b.date)
-  );
 
   // Actualizează intervalul atunci când se introduc date manuale
   const handleManualRangeSubmit = () => {
@@ -188,9 +204,57 @@ const History = () => {
     }
   };
 
+  const sortedBalanceData = [...balanceData].sort(
+    (a, b) => new Date(a.date) - new Date(b.date)
+  );
+  const sortedProfitLossData = [...profitLossData].sort(
+    (a, b) => new Date(a.date) - new Date(b.date)
+  );
+
   return (
-    <div className="p-4 bg-gray-900 text-white min-h-screen">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="p-4 bg-gray-900 text-white min-h-screen"
+    >
       <h1 className="text-2xl font-bold mb-4 text-green-400">History</h1>
+
+      {/* Selector de proiecte */}
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold mb-2">Filter by Projects</h2>
+        <select
+          multiple
+          value={selectedProjects}
+          onChange={handleProjectSelect}
+          className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white"
+        >
+          <option value="Toate">Toate</option>
+          {projects.map((project) => (
+            <option key={project.id} value={project.name}>
+              {project.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Afișează proiectele selectate */}
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold mb-2">Selected Projects</h2>
+        <div className="flex flex-wrap gap-2">
+          {selectedProjects.map((project) => (
+            <motion.span
+              key={project}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.3 }}
+              className="bg-green-600 text-white px-3 py-1 rounded-lg"
+            >
+              {project}
+            </motion.span>
+          ))}
+        </div>
+      </div>
 
       {/* Selector de interval de timp */}
       <div className="mb-6">
@@ -277,22 +341,16 @@ const History = () => {
             height={300}
             data={sortedBalanceData}
             margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-            style={{ background: "#1F2937", borderRadius: "8px" }} // Fundal întunecat
           >
-            <XAxis
-              dataKey="date"
-              stroke="#6B7280"
-              tick={{ fill: "#6B7280" }} // Culoare text axa X
-            />
-            <YAxis stroke="#6B7280" tick={{ fill: "#6B7280" }} />{" "}
-            {/* Culoare text axa Y */}
+            <XAxis dataKey="date" stroke="#6B7280" tick={{ fill: "#6B7280" }} />
+            <YAxis stroke="#6B7280" tick={{ fill: "#6B7280" }} />
             <CartesianGrid stroke="#374151" strokeDasharray="5 5" />
             <Tooltip
               contentStyle={{
                 backgroundColor: "#1F2937",
                 border: "none",
                 color: "#FFFFFF",
-              }} // Stil tooltip
+              }}
             />
             <Legend />
             <Line
@@ -315,29 +373,19 @@ const History = () => {
             height={300}
             data={sortedProfitLossData}
             margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-            style={{ background: "#1F2937", borderRadius: "8px" }} // Fundal întunecat
           >
-            <XAxis
-              dataKey="date"
-              stroke="#6B7280"
-              tick={{ fill: "#6B7280" }} // Culoare text axa X
-            />
-            <YAxis stroke="#6B7280" tick={{ fill: "#6B7280" }} />{" "}
-            {/* Culoare text axa Y */}
+            <XAxis dataKey="date" stroke="#6B7280" tick={{ fill: "#6B7280" }} />
+            <YAxis stroke="#6B7280" tick={{ fill: "#6B7280" }} />
             <CartesianGrid stroke="#374151" strokeDasharray="5 5" />
             <Tooltip
               contentStyle={{
                 backgroundColor: "#1F2937",
                 border: "none",
                 color: "#FFFFFF",
-              }} // Stil tooltip
+              }}
             />
             <Legend />
-            <Bar
-              dataKey="netProfitLoss"
-              name="Result"
-              barSize={20} // Lățimea barelor
-            >
+            <Bar dataKey="netProfitLoss" name="Result" barSize={20}>
               {sortedProfitLossData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
@@ -357,9 +405,7 @@ const History = () => {
             <p className="text-gray-400">Total Profit</p>
             <p className="text-green-400 text-xl">
               {balanceData.length > 0
-                ? `${(
-                    balanceData[balanceData.length - 1].balance - balance
-                  ).toFixed(2)}€`
+                ? `${balanceData[balanceData.length - 1].balance.toFixed(2)}€`
                 : "0€"}
             </p>
           </div>
@@ -406,7 +452,11 @@ const History = () => {
               ))}
             </Pie>
             <Tooltip
-              contentStyle={{ backgroundColor: "#1F2937", border: "none" }}
+              contentStyle={{
+                backgroundColor: "#1F2937",
+                border: "none",
+                color: "#FFFFFF",
+              }}
             />
             <Legend />
           </PieChart>
@@ -447,7 +497,7 @@ const History = () => {
           </table>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

@@ -17,7 +17,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { BalanceContext } from "../context/BalanceContext";
 import { ProjectsContext } from "../context/ProjectsContext";
-import { motion } from "framer-motion"; // Pentru animații
+import { motion } from "framer-motion";
 
 const History = () => {
   const [balanceData, setBalanceData] = useState([]);
@@ -29,17 +29,47 @@ const History = () => {
   const [selectedRangeLabel, setSelectedRangeLabel] = useState("");
   const [manualStartDate, setManualStartDate] = useState("");
   const [manualEndDate, setManualEndDate] = useState("");
-  const [selectedProjects, setSelectedProjects] = useState(["Toate"]); // Implicit, selectează "Toate"
+  const [selectedProjects, setSelectedProjects] = useState(["Toate"]);
   const { balancing } = useContext(BalanceContext);
   const { projects } = useContext(ProjectsContext);
 
   const COLORS = ["#10B981", "#EF4444"];
+
+  // Componentă personalizată pentru Tooltip
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      const value = payload[0].value;
+      const isPositive = value >= 0;
+      const tooltipText = isPositive ? "Win" : "Loss";
+      const tooltipColor = isPositive ? "#10B981" : "#EF4444";
+
+      return (
+        <div className="p-3 bg-gray-800 border border-gray-700 rounded-lg shadow-lg">
+          <p className="text-sm" style={{ color: tooltipColor }}>
+            {tooltipText}
+          </p>
+          <p className="text-sm text-gray-400">{`Date: ${label}`}</p>
+          <p className="text-sm" style={{ color: tooltipColor }}>
+            {`Value: ${value.toFixed(2)}€`}
+          </p>
+        </div>
+      );
+    }
+
+    return null;
+  };
 
   // Încarcă datele din localStorage la montarea componentei
   useEffect(() => {
     const storedBets = JSON.parse(localStorage.getItem("betsByDate")) || {};
     processBetsData(storedBets);
   }, []);
+
+  // Monitorizează schimbările în selectedProjects și re-procesează datele
+  useEffect(() => {
+    const storedBets = JSON.parse(localStorage.getItem("betsByDate")) || {};
+    processBetsData(storedBets, startDate, endDate);
+  }, [selectedProjects, startDate, endDate]);
 
   // Procesează datele din `betsByDate` pentru a genera graficele și statisticile
   const processBetsData = (betsByDate, start = null, end = null) => {
@@ -53,7 +83,7 @@ const History = () => {
     const winLossCount = { won: 0, lost: 0 };
     const transactions = [];
 
-    let currentBalance = balancing || 0; // Folosește balanța inițială din context
+    let currentBalance = balancing || 0;
 
     Object.keys(betsByDate).forEach((date) => {
       const betDate = new Date(date);
@@ -63,7 +93,6 @@ const History = () => {
         let dailyLoss = 0;
 
         bets.forEach((bet) => {
-          // Filtrează după proiectele selectate sau afișează toate dacă este selectat "Toate"
           if (
             selectedProjects.includes("Toate") ||
             selectedProjects.includes(bet.title)
@@ -94,7 +123,6 @@ const History = () => {
         currentBalance += dailyProfit - dailyLoss;
         balanceHistory.push({ date, balance: currentBalance });
 
-        // Adăugăm profit/pierdere netă pentru ziua respectivă
         const netProfitLoss = dailyProfit - dailyLoss;
         profitLossHistory.push({ date, netProfitLoss });
       }
@@ -109,13 +137,12 @@ const History = () => {
     setTransactionHistory(transactions);
   };
 
-  // Actualizează datele atunci când se schimbă intervalul selectat sau proiectele selectate
+  // Actualizează datele atunci când se schimbă intervalul selectat
   const handleDateChange = (dates) => {
     const [start, end] = dates;
     setStartDate(start);
     setEndDate(end);
 
-    // Actualizează label-ul intervalului selectat
     if (start && end) {
       setSelectedRangeLabel(
         `Interval selectat: ${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
@@ -123,10 +150,6 @@ const History = () => {
     } else {
       setSelectedRangeLabel("");
     }
-
-    // Re-procesează datele pentru noul interval
-    const storedBets = JSON.parse(localStorage.getItem("betsByDate")) || {};
-    processBetsData(storedBets, start, end);
   };
 
   // Gestionează selectarea proiectelor
@@ -135,10 +158,6 @@ const History = () => {
       (option) => option.value
     );
     setSelectedProjects(selectedOptions);
-
-    // Re-procesează datele pentru noile proiecte selectate
-    const storedBets = JSON.parse(localStorage.getItem("betsByDate")) || {};
-    processBetsData(storedBets, startDate, endDate);
   };
 
   // Butoane rapide pentru intervale comune
@@ -167,7 +186,6 @@ const History = () => {
     setStartDate(start);
     setEndDate(end);
 
-    // Actualizează label-ul intervalului selectat
     if (start && end) {
       setSelectedRangeLabel(
         `Interval selectat: ${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
@@ -175,9 +193,6 @@ const History = () => {
     } else {
       setSelectedRangeLabel("");
     }
-
-    const storedBets = JSON.parse(localStorage.getItem("betsByDate")) || {};
-    processBetsData(storedBets, start, end);
   };
 
   // Actualizează intervalul atunci când se introduc date manuale
@@ -189,14 +204,9 @@ const History = () => {
       setStartDate(start);
       setEndDate(end);
 
-      // Actualizează label-ul intervalului selectat
       setSelectedRangeLabel(
         `Interval selectat: ${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
       );
-
-      // Re-procesează datele pentru noul interval
-      const storedBets = JSON.parse(localStorage.getItem("betsByDate")) || {};
-      processBetsData(storedBets, start, end);
     } else {
       alert(
         "Date invalide! Asigură-te că data de început este mai mică sau egală cu data de sfârșit."
@@ -345,13 +355,7 @@ const History = () => {
             <XAxis dataKey="date" stroke="#6B7280" tick={{ fill: "#6B7280" }} />
             <YAxis stroke="#6B7280" tick={{ fill: "#6B7280" }} />
             <CartesianGrid stroke="#374151" strokeDasharray="5 5" />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#1F2937",
-                border: "none",
-                color: "#FFFFFF",
-              }}
-            />
+            <Tooltip content={<CustomTooltip />} />
             <Legend />
             <Line
               type="monotone"
@@ -377,13 +381,7 @@ const History = () => {
             <XAxis dataKey="date" stroke="#6B7280" tick={{ fill: "#6B7280" }} />
             <YAxis stroke="#6B7280" tick={{ fill: "#6B7280" }} />
             <CartesianGrid stroke="#374151" strokeDasharray="5 5" />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#1F2937",
-                border: "none",
-                color: "#FFFFFF",
-              }}
-            />
+            <Tooltip content={<CustomTooltip />} />
             <Legend />
             <Bar dataKey="netProfitLoss" name="Result" barSize={20}>
               {sortedProfitLossData.map((entry, index) => (

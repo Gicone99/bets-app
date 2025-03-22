@@ -12,6 +12,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  ResponsiveContainer,
 } from "recharts";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -354,62 +355,116 @@ const History = () => {
       </div>
 
       {/* Grafic balanță */}
-      <div className="mt-8">
-        <h2 className="text-lg font-semibold mb-2">Balance Evolution</h2>
-        <div className="overflow-x-auto">
-          <LineChart
-            width={600}
-            height={300}
-            data={sortedBalanceData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-          >
-            <XAxis dataKey="date" stroke="#6B7280" tick={{ fill: "#6B7280" }} />
-            <YAxis stroke="#6B7280" tick={{ fill: "#6B7280" }} />
-            <CartesianGrid stroke="#374151" strokeDasharray="5 5" />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Line
-              type="monotone"
-              dataKey="balance"
-              stroke="#10B981"
-              strokeWidth={2}
-              dot={{ r: 4 }}
-            />
-          </LineChart>
-        </div>
-      </div>
-
-      {/* Grafic profit/pierdere */}
-      <div className="mt-8">
-        <h2 className="text-lg font-semibold mb-2">Profit & Loss</h2>
-        <div className="overflow-x-auto">
-          <BarChart
-            width={600}
-            height={300}
-            data={sortedProfitLossData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-          >
-            <XAxis dataKey="date" stroke="#6B7280" tick={{ fill: "#6B7280" }} />
-            <YAxis stroke="#6B7280" tick={{ fill: "#6B7280" }} />
-            <CartesianGrid stroke="#374151" strokeDasharray="5 5" />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Bar dataKey="netProfitLoss" name="Result" barSize={20}>
-              {sortedProfitLossData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={entry.netProfitLoss >= 0 ? "#10B981" : "#EF4444"}
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div>
+          <h2 className="text-lg font-semibold mb-2 text-center">
+            Balance Evolution
+          </h2>
+          <div className="overflow-x-auto">
+            <ResponsiveContainer width={600} height={400}>
+              <LineChart
+                data={sortedBalanceData}
+                margin={{ top: 20, bottom: 30 }}
+              >
+                <XAxis
+                  dataKey="date"
+                  stroke="#6B7280"
+                  tick={{ fill: "#6B7280", fontSize: 12 }}
+                  tickFormatter={(date) => new Date(date).toLocaleDateString()}
+                  angle={-45}
+                  textAnchor="end"
                 />
-              ))}
-            </Bar>
-          </BarChart>
+                <YAxis stroke="#6B7280" tick={{ fill: "#6B7280" }} />
+                <CartesianGrid stroke="#374151" strokeDasharray="5 5" />
+                <Tooltip content={<CustomTooltip />} />
+                <Line
+                  type="monotone"
+                  dataKey="balance"
+                  stroke="#10B981"
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Grafic profit/pierdere */}
+        <div>
+          <h2 className="text-lg font-semibold mb-2 text-center">
+            Profit & Loss
+          </h2>
+          <div className="overflow-x-auto">
+            <ResponsiveContainer width={600} height={400}>
+              <BarChart
+                data={sortedProfitLossData}
+                margin={{ top: 20, bottom: 30 }}
+              >
+                <XAxis
+                  dataKey="date"
+                  stroke="#6B7280"
+                  tick={{ fill: "#6B7280", fontSize: 12 }}
+                  tickFormatter={(date) => new Date(date).toLocaleDateString()}
+                  angle={-45}
+                  textAnchor="end"
+                />
+                <YAxis stroke="#6B7280" tick={{ fill: "#6B7280" }} />
+                <CartesianGrid stroke="#374151" strokeDasharray="5 5" />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="netProfitLoss" barSize={20}>
+                  {sortedProfitLossData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={entry.netProfitLoss >= 0 ? "#10B981" : "#EF4444"}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-lg font-semibold mb-2 text-center">
+            Win/Loss Ratio
+          </h2>
+          <div className="overflow-x-auto">
+            <ResponsiveContainer width={450} height={350}>
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                  label
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#1F2937",
+                    border: "none",
+                    color: "#FFFFFF",
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
       {/* Statistici */}
-      <div className="mt-8">
+      <div className="mt-8 text-center">
         <h2 className="text-lg font-semibold mb-2">Statistics</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
           <div className="p-4 bg-gray-800 rounded-lg">
             <p className="text-gray-400">Total Profit</p>
             <p className="text-green-400 text-xl">
@@ -438,43 +493,11 @@ const History = () => {
         </div>
       </div>
 
-      {/* Grafic circular (Pie Chart) */}
-      <div className="mt-8">
-        <h2 className="text-lg font-semibold mb-2">Win/Loss Ratio</h2>
-        <div className="overflow-x-auto">
-          <PieChart width={400} height={300}>
-            <Pie
-              data={pieData}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={80}
-              fill="#8884d8"
-              dataKey="value"
-              label
-            >
-              {pieData.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
-                />
-              ))}
-            </Pie>
-            <Tooltip
-              contentStyle={{
-                backgroundColor: "#1F2937",
-                border: "none",
-                color: "#FFFFFF",
-              }}
-            />
-            <Legend />
-          </PieChart>
-        </div>
-      </div>
-
       {/* Istoric tranzacții */}
       <div className="mt-8">
-        <h2 className="text-lg font-semibold mb-2">Transaction History</h2>
+        <h2 className="text-lg font-semibold mb-2 text-center">
+          Transaction History
+        </h2>
         <div className="overflow-x-auto">
           <table className="min-w-full bg-gray-800 rounded-lg">
             <thead>

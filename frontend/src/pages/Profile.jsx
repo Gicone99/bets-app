@@ -16,6 +16,28 @@ const Profile = () => {
       alert("Deposit amount must be greater than 0.");
       return;
     }
+
+    //sample fetch forceaddbalance
+    // fetch("http://localhost:3080/forceaddbalance", {
+    //   method: "post",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify({
+    //     username: "gicone",
+    //     amount: amount,
+    //   }),
+    // })
+    //   .then((response) => {
+    //     if (!response.ok) {
+    //       throw new Error("Invalid credentials");
+    //     }
+    //     return response.json();
+    //   })
+    //   .then((data) => {
+    //     console.log(data.Raspuns);
+    //   });
+
     setBalance((prevBalance) => prevBalance + amount);
     setDepositAmount("");
     alert(`Successfully deposited $${amount.toFixed(2)}.`);

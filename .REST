@@ -9,18 +9,17 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFsZ
 
 ###
 
-POST http://localhost:3000/register
+POST http://localhost:3080/register
 content-type: application/json
 
 {
     "username": "alex",
-    "password": "alex123",
-    "ticket": "B365-999"
+    "password": "alex123"
 }
 
 ###
 
-POST http://localhost:3000/login
+POST http://localhost:3080/login
 content-type: application/json
 
 {
@@ -41,4 +40,24 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFsZ
 
 {
     "ticket": "B365-999"
+}
+
+###
+
+POST http://localhost:3080/addbalance
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFsZXgiLCJpYXQiOjE3NDIyNDQ2OTQsImV4cCI6MTc0MjI0ODI5NH0.B9olEA1StMaXL94TSaVHOw0HJfr9d3ui1L15YkqZ8nc
+
+{
+    "amount": 100
+}
+
+###
+
+POST http://localhost:3080/forceaddbalance
+content-type: application/json
+
+{
+    "amount": 100,
+    "username": "gicone"
 }

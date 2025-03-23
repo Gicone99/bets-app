@@ -148,8 +148,16 @@ const History = () => {
       setSelectedRangeLabel(
         `Selected Range: ${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
       );
+      setSelectedRange("customRange"); // Setăm selectedRange la "customRange"
+
+      // Actualizăm manualStartDate și manualEndDate cu valorile selectate din calendar
+      setManualStartDate(start.toISOString().split("T")[0]); // Format: YYYY-MM-DD
+      setManualEndDate(end.toISOString().split("T")[0]); // Format: YYYY-MM-DD
     } else {
       setSelectedRangeLabel("");
+      setSelectedRange(""); // Resetăm selectedRange dacă nu este selectat niciun interval
+      setManualStartDate("");
+      setManualEndDate("");
     }
   };
 
@@ -264,7 +272,7 @@ const History = () => {
       {/* Calendar și controale */}
       <div className="flex flex-col lg:flex-row gap-8 text-center">
         {/* Calendar și controale integrate */}
-        <div className="bg-gray-800 p-6 rounded-lg w-full">
+        <div className="p-6 rounded-lg w-full">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mr-8">
             {/* Coloana 1: Calendar */}
             <div>
@@ -412,31 +420,35 @@ const History = () => {
             Balance Evolution
           </h2>
           <div className="overflow-x-auto">
-            <ResponsiveContainer width={600} height={400}>
-              <LineChart
-                data={sortedBalanceData}
-                margin={{ top: 20, bottom: 30 }}
-              >
-                <XAxis
-                  dataKey="date"
-                  stroke="#6B7280"
-                  tick={{ fill: "#6B7280", fontSize: 12 }}
-                  tickFormatter={(date) => new Date(date).toLocaleDateString()}
-                  angle={-45}
-                  textAnchor="end"
-                />
-                <YAxis stroke="#6B7280" tick={{ fill: "#6B7280" }} />
-                <CartesianGrid stroke="#374151" strokeDasharray="5 5" />
-                <Tooltip content={<CustomTooltip />} />
-                <Line
-                  type="monotone"
-                  dataKey="balance"
-                  stroke="#10B981"
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <div style={{ minWidth: `${sortedBalanceData.length * 25}px` }}>
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart
+                  data={sortedBalanceData}
+                  margin={{ top: 20, bottom: 30 }}
+                >
+                  <XAxis
+                    dataKey="date"
+                    stroke="#6B7280"
+                    tick={{ fill: "#6B7280", fontSize: 12 }}
+                    tickFormatter={(date) =>
+                      new Date(date).toLocaleDateString()
+                    }
+                    angle={-45}
+                    textAnchor="end"
+                  />
+                  <YAxis stroke="#6B7280" tick={{ fill: "#6B7280" }} />
+                  <CartesianGrid stroke="#374151" strokeDasharray="5 5" />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Line
+                    type="monotone"
+                    dataKey="balance"
+                    stroke="#10B981"
+                    strokeWidth={2}
+                    dot={{ r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
@@ -446,41 +458,46 @@ const History = () => {
             Profit & Loss
           </h2>
           <div className="overflow-x-auto">
-            <ResponsiveContainer width={600} height={400}>
-              <BarChart
-                data={sortedProfitLossData}
-                margin={{ top: 20, bottom: 30 }}
-              >
-                <XAxis
-                  dataKey="date"
-                  stroke="#6B7280"
-                  tick={{ fill: "#6B7280", fontSize: 12 }}
-                  tickFormatter={(date) => new Date(date).toLocaleDateString()}
-                  angle={-45}
-                  textAnchor="end"
-                />
-                <YAxis stroke="#6B7280" tick={{ fill: "#6B7280" }} />
-                <CartesianGrid stroke="#374151" strokeDasharray="5 5" />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="netProfitLoss" barSize={20}>
-                  {sortedProfitLossData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={entry.netProfitLoss >= 0 ? "#10B981" : "#EF4444"}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <div style={{ minWidth: `${sortedProfitLossData.length * 25}px` }}>
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart
+                  data={sortedProfitLossData}
+                  margin={{ top: 20, bottom: 30 }}
+                >
+                  <XAxis
+                    dataKey="date"
+                    stroke="#6B7280"
+                    tick={{ fill: "#6B7280", fontSize: 12 }}
+                    tickFormatter={(date) =>
+                      new Date(date).toLocaleDateString()
+                    }
+                    angle={-45}
+                    textAnchor="end"
+                  />
+                  <YAxis stroke="#6B7280" tick={{ fill: "#6B7280" }} />
+                  <CartesianGrid stroke="#374151" strokeDasharray="5 5" />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="netProfitLoss" barSize={20}>
+                    {sortedProfitLossData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.netProfitLoss >= 0 ? "#10B981" : "#EF4444"}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
+        {/* Grafic Win/Loss Ratio */}
         <div>
           <h2 className="text-lg font-semibold mb-2 text-center">
             Win/Loss Ratio
           </h2>
-          <div className="overflow-x-auto">
-            <ResponsiveContainer width={450} height={350}>
+          <div>
+            <ResponsiveContainer width="100%" height={350}>
               <PieChart>
                 <Pie
                   data={pieData}

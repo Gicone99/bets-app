@@ -1,139 +1,127 @@
 import { useState } from "react";
-import React from "react";
-import {
-  Box,
-  TextField,
-  Button,
-  Typography,
-  Paper,
-  Divider,
-  Snackbar,
-  Alert,
-} from "@mui/material";
-import { styled } from "@mui/system";
-
-const Background = styled(Box)(({ theme }) => ({
-  height: "100vh",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)",
-  color: "#fff",
-  textAlign: "center",
-}));
-
-const RegisterContainer = styled(Paper)(({ theme }) => ({
-  padding: theme.spacing(4),
-  maxWidth: 400,
-  width: "100%",
-  borderRadius: theme.spacing(2),
-  backgroundColor: "rgba(255, 255, 255, 0.1)",
-  backdropFilter: "blur(10px)",
-  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.37)",
-}));
-
-const RegisterButton = styled(Button)(({ theme }) => ({
-  backgroundColor: "#4CAF50",
-  color: "#fff",
-  fontWeight: "bold",
-  "&:hover": {
-    backgroundColor: "#45A049",
-  },
-}));
 
 const Register = () => {
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleCloseSnackbar = () => {
     setOpenSnackbar(false);
   };
 
-  function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    fetch("http://localhost:3000/register", {
-      method: "post",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username: username,
-        password: password,
-      }),
-    })
-      .then((response) => response.text())
-      .then((data) => {
-        console.log(data);
-      });
+    console.log("Submitting:", { username, email, password });
 
-    setOpenSnackbar(true);
-  }
+    try {
+      const response = await fetch("http://localhost:3070/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+        }),
+      });
+      const data = await response.json();
+      console.log("Response from backend:", data);
+
+      if (response.ok) {
+        setOpenSnackbar(true);
+        setErrorMessage("");
+      } else {
+        setErrorMessage(data.message || "Registration failed");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setErrorMessage("An error occurred. Please try again.");
+    }
+  };
 
   return (
-    <Background>
-      <RegisterContainer>
-        <Typography variant="h4" gutterBottom>
-          Sign Up for Bet App
-        </Typography>
-        <Typography variant="body1" gutterBottom>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-black via-gray-900 to-gray-900">
+      <div className="bg-white bg-opacity-10 backdrop-blur-md rounded-lg shadow-lg p-8 max-w-md w-full">
+        <h1 className="text-4xl font-bold text-white mb-4">Sign Up</h1>
+        <p className="text-gray-300 mb-6">
           Create your account below to get started.
-        </Typography>
-        <Divider sx={{ marginY: 2 }} />
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
-          sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-        >
-          <TextField
-            label="Username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            fullWidth
-            variant="outlined"
-            required
-            InputProps={{ style: { color: "#fff" } }}
-            InputLabelProps={{ style: { color: "#bbb" } }}
-          />
-          <TextField
-            label="New Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            fullWidth
-            variant="outlined"
-            required
-            InputProps={{ style: { color: "#fff" } }}
-            InputLabelProps={{ style: { color: "#bbb" } }}
-          />
-          <RegisterButton type="submit" fullWidth>
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label
+              htmlFor="username"
+              className="block text-sm font-medium text-gray-300"
+            >
+              Username
+            </label>
+            <input
+              type="text"
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+              required
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-300"
+            >
+              Email
+            </label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+              required
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-300"
+            >
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+              required
+            />
+          </div>
+          {errorMessage && (
+            <p className="text-red-500 text-sm mt-1">{errorMessage}</p>
+          )}
+          <button
+            type="submit"
+            className="w-full bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-600 transition duration-200"
+          >
             Sign Up
-          </RegisterButton>
-        </Box>
-        <Typography variant="body2" sx={{ marginTop: 2, color: "#bbb" }}>
+          </button>
+        </form>
+        <p className="text-gray-300 mt-4">
           Already have an account?{" "}
-          <a href="/login" style={{ color: "#4CAF50" }}>
+          <a href="/login" className="text-green-500 hover:underline">
             Login
           </a>
-        </Typography>
-      </RegisterContainer>
+        </p>
+      </div>
 
-      {/* Snackbar pentru mesaj de succes */}
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity="success"
-          sx={{ width: "100%" }}
-        >
+      {openSnackbar && (
+        <div className="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md">
           Account successfully created!
-        </Alert>
-      </Snackbar>
-    </Background>
+        </div>
+      )}
+    </div>
   );
 };
 

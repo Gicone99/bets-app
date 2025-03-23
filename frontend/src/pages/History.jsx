@@ -373,7 +373,7 @@ const History = () => {
                 {/* Total Profit */}
                 <div className="flex items-center justify-between p-2 bg-gray-700 rounded-lg gap-2">
                   <p className="text-gray-400">
-                    {totalProfit >= 0 ? "Total Profit:" : "Total Lost:"}
+                    {totalProfit >= 0 ? "Total Profit:" : "Total Loss:"}
                   </p>
                   <p
                     className={`text-xl ${

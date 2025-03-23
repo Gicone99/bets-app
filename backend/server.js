@@ -10,7 +10,7 @@ const moment = require("moment");
 dotenv.config();
 
 const app = express();
-const port = 3080;
+const port = 3070;
 
 // Middleware to parse JSON requests
 app.use(express.json());
@@ -74,27 +74,43 @@ function authenticateJWT(req, res, next) {
 
 // Register a new user
 app.post("/register", async (req, res) => {
-  const { username, password } = req.body;
+  const { username, email, password } = req.body;
 
-  if (!username || !password) {
+  if (!username || !email || !password) {
     return res
       .status(400)
-      .json({ message: "Username and password are required" });
+      .json({ message: "Username, email, and password are required" });
   }
 
   try {
-    // Hash the password before storing it
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Insert user into the database
-    const query = "INSERT INTO users (username, password) VALUES (?, ?)";
-    db.query(query, [username, hashedPassword], (err, result) => {
+    // Verifică dacă e-mailul este deja folosit
+    const emailCheckQuery = "SELECT * FROM users WHERE email = ?";
+    db.query(emailCheckQuery, [email], async (err, results) => {
       if (err) {
         return res
           .status(500)
-          .json({ message: "Error registering user", error: err });
+          .json({ message: "Error checking email", error: err });
       }
-      res.status(201).json({ message: "User registered successfully" });
+
+      if (results.length > 0) {
+        return res.status(400).json({ message: "Email is already in use" });
+      }
+
+      // Hash the password before storing it
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Insert user into the database
+      const query =
+        "INSERT INTO users (username, email, password) VALUES (?, ?, ?)";
+      db.query(query, [username, email, hashedPassword], (err, result) => {
+        if (err) {
+          console.error("Database error:", err);
+          return res
+            .status(500)
+            .json({ message: "Error registering user", error: err });
+        }
+        res.status(201).json({ message: "User registered successfully" });
+      });
     });
   } catch (err) {
     res.status(500).json({ message: "Error hashing password", error: err });

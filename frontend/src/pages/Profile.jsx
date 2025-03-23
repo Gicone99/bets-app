@@ -2,7 +2,7 @@ import React, { useState, useContext } from "react";
 import { BalanceContext } from "../context/BalanceContext";
 
 const Profile = () => {
-  const { balance, setBalance } = useContext(BalanceContext); // Folosește contextul
+  const { balance, setBalance } = useContext(BalanceContext);
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
 
@@ -18,7 +18,7 @@ const Profile = () => {
     }
 
     //sample fetch forceaddbalance
-    // fetch("http://localhost:3080/forceaddbalance", {
+    // fetch("http://localhost:3070/forceaddbalance", {
     //   method: "post",
     //   headers: {
     //     "Content-Type": "application/json",

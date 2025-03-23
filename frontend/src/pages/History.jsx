@@ -6,7 +6,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   BarChart,
   Bar,
   PieChart,
@@ -30,7 +29,7 @@ const History = () => {
   const [selectedRangeLabel, setSelectedRangeLabel] = useState("");
   const [manualStartDate, setManualStartDate] = useState("");
   const [manualEndDate, setManualEndDate] = useState("");
-  const [selectedProjects, setSelectedProjects] = useState(["All"]);
+  const [selectedProjects, setSelectedProjects] = useState(["All Projects"]);
   const { balancing } = useContext(BalanceContext);
   const { projects } = useContext(ProjectsContext);
 
@@ -95,7 +94,7 @@ const History = () => {
 
         bets.forEach((bet) => {
           if (
-            selectedProjects.includes("All") ||
+            selectedProjects.includes("All Projects") ||
             selectedProjects.includes(bet.title)
           ) {
             if (bet.isReady) {
@@ -242,114 +241,108 @@ const History = () => {
       className="p-4 bg-gray-900 text-white min-h-screen"
     >
       <h1 className="text-2xl font-bold mb-4 text-green-400">History</h1>
+      <div className="p-4 bg-gray-900 text-white">
+        <div className="bg-gray-800 p-4 rounded-lg">
+          <DatePicker
+            selected={startDate}
+            onChange={handleDateChange}
+            startDate={startDate}
+            endDate={endDate}
+            selectsRange
+            inline
+            className="bg-gray-800 text-white custom-datepicker"
+          />
+        </div>
+      </div>
 
-      {/* Container principal pentru calendar și controale */}
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Calendar */}
-        <div className="lg:w-1/2">
-          <div className="bg-gray-800 p-4 rounded-lg">
-            <DatePicker
-              selected={startDate}
-              onChange={handleDateChange}
-              startDate={startDate}
-              endDate={endDate}
-              selectsRange
-              inline
-              className="bg-gray-800 text-white"
-            />
+      {/* Controale în dreapta calendarului */}
+      <div className="lg:w-1/2 space-y-6">
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Select Date Range</h2>
+          <div className="flex flex-col space-y-2">
+            <div className="flex flex-col">
+              <label className="text-gray-400 mb-1">Begin Date</label>
+              <input
+                type="date"
+                value={manualStartDate}
+                onChange={(e) => setManualStartDate(e.target.value)}
+                className="bg-gray-800 text-white p-2 rounded-lg"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-gray-400 mb-1">End Date</label>
+              <input
+                type="date"
+                value={manualEndDate}
+                onChange={(e) => setManualEndDate(e.target.value)}
+                className="bg-gray-800 text-white p-2 rounded-lg"
+              />
+            </div>
+            <button
+              onClick={handleManualRangeSubmit}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+            >
+              Aplică
+            </button>
           </div>
         </div>
 
-        {/* Controale în dreapta calendarului */}
-        <div className="lg:w-1/2 space-y-6">
-          {/* Begin Date, End Date și butonul Aplică */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Select Date Range</h2>
-            <div className="flex flex-col space-y-2">
-              <div className="flex flex-col">
-                <label className="text-gray-400 mb-1">Begin Date</label>
-                <input
-                  type="date"
-                  value={manualStartDate}
-                  onChange={(e) => setManualStartDate(e.target.value)}
-                  className="bg-gray-800 text-white p-2 rounded-lg"
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="text-gray-400 mb-1">End Date</label>
-                <input
-                  type="date"
-                  value={manualEndDate}
-                  onChange={(e) => setManualEndDate(e.target.value)}
-                  className="bg-gray-800 text-white p-2 rounded-lg"
-                />
-              </div>
-              <button
-                onClick={handleManualRangeSubmit}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+        {/* Select Time Range */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Select Time Range</h2>
+          <select
+            onChange={(e) => handleQuickRange(e.target.value)}
+            className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white"
+          >
+            <option value="">All Time</option>
+            <option value="today">Today</option>
+            <option value="thisWeek">This Week</option>
+            <option value="thisMonth">This Month</option>
+            <option value="thisYear">This Year</option>
+            <option value="lastWeek">Last Week</option>
+            <option value="lastMonth">Last Month</option>
+            <option value="lastYear">Last Year</option>
+          </select>
+          {/* Afișează intervalul selectat */}
+          {selectedRangeLabel && (
+            <div className="mt-2">
+              <p className="text-green-400 text-sm">{selectedRangeLabel}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Select Project și Selected Projects */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Select Project</h2>
+          <select
+            value={selectedProjects[0]}
+            onChange={handleProjectSelect}
+            className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white"
+          >
+            <option value="All Projects">All Projects</option>
+            {projects.map((project) => (
+              <option key={project.id} value={project.name}>
+                {project.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Afișează proiectele selectate */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">Selected Projects</h2>
+          <div className="flex flex-wrap gap-2">
+            {selectedProjects.map((project) => (
+              <motion.span
+                key={project}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className="bg-green-600 text-white px-3 py-1 rounded-lg"
               >
-                Aplică
-              </button>
-            </div>
-          </div>
-
-          {/* Select Time Range */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Select Time Range</h2>
-            <select
-              onChange={(e) => handleQuickRange(e.target.value)}
-              className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white"
-            >
-              <option value="">All</option>
-              <option value="today">Today</option>
-              <option value="thisWeek">This Week</option>
-              <option value="thisMonth">This Month</option>
-              <option value="thisYear">This Year</option>
-              <option value="lastWeek">Last Week</option>
-              <option value="lastMonth">Last Month</option>
-              <option value="lastYear">Last Year</option>
-            </select>
-            {/* Afișează intervalul selectat */}
-            {selectedRangeLabel && (
-              <div className="mt-2">
-                <p className="text-green-400 text-sm">{selectedRangeLabel}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Select Project și Selected Projects */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Select Project</h2>
-            <select
-              value={selectedProjects[0]}
-              onChange={handleProjectSelect}
-              className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white"
-            >
-              <option value="All">All</option>
-              {projects.map((project) => (
-                <option key={project.id} value={project.name}>
-                  {project.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Afișează proiectele selectate */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Selected Projects</h2>
-            <div className="flex flex-wrap gap-2">
-              {selectedProjects.map((project) => (
-                <motion.span
-                  key={project}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-green-600 text-white px-3 py-1 rounded-lg"
-                >
-                  {project}
-                </motion.span>
-              ))}
-            </div>
+                {project}
+              </motion.span>
+            ))}
           </div>
         </div>
       </div>

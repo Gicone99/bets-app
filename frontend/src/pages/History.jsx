@@ -145,7 +145,7 @@ const History = () => {
 
     if (start && end) {
       setSelectedRangeLabel(
-        `Interval selectat: ${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
+        `Selected Range: ${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
       );
     } else {
       setSelectedRangeLabel("");
@@ -202,7 +202,7 @@ const History = () => {
 
     if (start && end) {
       setSelectedRangeLabel(
-        `Interval selectat: ${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
+        `Selected Range: ${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
       );
     } else {
       setSelectedRangeLabel("");
@@ -219,7 +219,7 @@ const History = () => {
       setEndDate(end);
 
       setSelectedRangeLabel(
-        `Interval selectat: ${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
+        `Selected Range: ${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
       );
     } else {
       alert("Date invalide! Begin Date must be lower than End Date.");
@@ -241,108 +241,141 @@ const History = () => {
       className="p-4 bg-gray-900 text-white min-h-screen"
     >
       <h1 className="text-2xl font-bold mb-4 text-green-400">History</h1>
-      <div className="p-4 bg-gray-900 text-white">
-        <div className="bg-gray-800 p-4 rounded-lg">
-          <DatePicker
-            selected={startDate}
-            onChange={handleDateChange}
-            startDate={startDate}
-            endDate={endDate}
-            selectsRange
-            inline
-            className="bg-gray-800 text-white custom-datepicker"
-          />
-        </div>
-      </div>
 
-      {/* Controale în dreapta calendarului */}
-      <div className="lg:w-1/2 space-y-6">
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Select Date Range</h2>
-          <div className="flex flex-col space-y-2">
-            <div className="flex flex-col">
-              <label className="text-gray-400 mb-1">Begin Date</label>
-              <input
-                type="date"
-                value={manualStartDate}
-                onChange={(e) => setManualStartDate(e.target.value)}
-                className="bg-gray-800 text-white p-2 rounded-lg"
+      {/* Calendar și controale */}
+      <div className="flex flex-col lg:flex-row gap-8 text-center">
+        {/* Calendar și controale integrate */}
+        <div className="bg-gray-800 p-6 rounded-lg w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mr-8">
+            {/* Coloana 1: Calendar */}
+            <div>
+              <h2 className="text-lg font-semibold mb-4">
+                Select Time from Calendar
+              </h2>
+              <DatePicker
+                selected={startDate}
+                onChange={handleDateChange}
+                startDate={startDate}
+                endDate={endDate}
+                selectsRange
+                inline
+                className="bg-gray-800 text-white custom-datepicker"
               />
+              {selectedRangeLabel && (
+                <div className="mt-4">
+                  <p className="text-green-400 text-sm">{selectedRangeLabel}</p>
+                </div>
+              )}
             </div>
-            <div className="flex flex-col">
-              <label className="text-gray-400 mb-1">End Date</label>
-              <input
-                type="date"
-                value={manualEndDate}
-                onChange={(e) => setManualEndDate(e.target.value)}
-                className="bg-gray-800 text-white p-2 rounded-lg"
-              />
-            </div>
-            <button
-              onClick={handleManualRangeSubmit}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+
+            {/* Coloana 2: Select Date Range */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="space-y-4 mr-8"
             >
-              Aplică
-            </button>
-          </div>
-        </div>
-
-        {/* Select Time Range */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Select Time Range</h2>
-          <select
-            onChange={(e) => handleQuickRange(e.target.value)}
-            className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white"
-          >
-            <option value="">All Time</option>
-            <option value="today">Today</option>
-            <option value="thisWeek">This Week</option>
-            <option value="thisMonth">This Month</option>
-            <option value="thisYear">This Year</option>
-            <option value="lastWeek">Last Week</option>
-            <option value="lastMonth">Last Month</option>
-            <option value="lastYear">Last Year</option>
-          </select>
-          {/* Afișează intervalul selectat */}
-          {selectedRangeLabel && (
-            <div className="mt-2">
-              <p className="text-green-400 text-sm">{selectedRangeLabel}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Select Project și Selected Projects */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Select Project</h2>
-          <select
-            value={selectedProjects[0]}
-            onChange={handleProjectSelect}
-            className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white"
-          >
-            <option value="All Projects">All Projects</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.name}>
-                {project.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Afișează proiectele selectate */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Selected Projects</h2>
-          <div className="flex flex-wrap gap-2">
-            {selectedProjects.map((project) => (
-              <motion.span
-                key={project}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.3 }}
-                className="bg-green-600 text-white px-3 py-1 rounded-lg"
+              <h2 className="text-lg font-semibold">Select Time Range</h2>
+              <select
+                onChange={(e) => handleQuickRange(e.target.value)}
+                className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-700 text-white text-center"
               >
-                {project}
-              </motion.span>
-            ))}
+                <option value="">All Time</option>
+                <option value="today">Today</option>
+                <option value="thisWeek">This Week</option>
+                <option value="thisMonth">This Month</option>
+                <option value="thisYear">This Year</option>
+                <option value="lastWeek">Last Week</option>
+                <option value="lastMonth">Last Month</option>
+                <option value="lastYear">Last Year</option>
+              </select>
+              <div className="flex flex-col space-y-2">
+                <div className="flex flex-col">
+                  <label className="text-gray-400 mb-1">Begin Date</label>
+                  <input
+                    type="date"
+                    value={manualStartDate}
+                    onChange={(e) => setManualStartDate(e.target.value)}
+                    className="bg-gray-700 text-white p-2 rounded-lg text-center"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-gray-400 mb-1">End Date</label>
+                  <input
+                    type="date"
+                    value={manualEndDate}
+                    onChange={(e) => setManualEndDate(e.target.value)}
+                    className="bg-gray-700 text-white p-2 rounded-lg text-center"
+                  />
+                </div>
+                <button
+                  onClick={handleManualRangeSubmit}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+                >
+                  Apply
+                </button>
+              </div>
+            </motion.div>
+
+            {/* Coloana 3: Statistici (Total Profit, Win Rate, Total Bets) */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 1 }}
+              className="space-y-4 mr-8"
+            >
+              <h2 className="text-lg font-semibold">Select Project</h2>
+              <select
+                value={selectedProjects[0]}
+                onChange={handleProjectSelect}
+                className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-700 text-white text-center"
+              >
+                <option value="All Projects">All Projects</option>
+                {projects.map((project) => (
+                  <option key={project.id} value={project.name}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+              <h2 className="text-lg font-semibold">Statistics</h2>
+              <div className="space-y-2">
+                {/* Total Profit */}
+                <div className="flex items-center justify-between p-2 bg-gray-700 rounded-lg gap-2">
+                  <p className="text-gray-400">Total Profit:</p>
+                  <p className="text-green-400 text-xl">
+                    {balanceData.length > 0
+                      ? `${balanceData[balanceData.length - 1].balance.toFixed(
+                          2
+                        )}`
+                      : "0"}
+                  </p>
+                </div>
+
+                {/* Win Rate */}
+                <div className="flex items-center justify-between p-2 bg-gray-700 rounded-lg gap-2">
+                  <p className="text-gray-400">Win Rate:</p>
+                  <p className="text-green-400 text-xl">
+                    {pieData.length > 0
+                      ? `${(
+                          (pieData[0].value /
+                            (pieData[0].value + pieData[1].value)) *
+                          100
+                        ).toFixed(2)}%`
+                      : "0%"}
+                  </p>
+                </div>
+
+                {/* Total Bets */}
+                <div className="flex items-center justify-between p-2 bg-gray-700 rounded-lg gap-2">
+                  <p className="text-gray-400">Total Bets:</p>
+                  <p className="text-green-400 text-xl">
+                    {pieData.length > 0
+                      ? pieData[0].value + pieData[1].value
+                      : 0}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -454,41 +487,9 @@ const History = () => {
         </div>
       </div>
 
-      {/* Statistici */}
-      <div className="mt-8 text-center">
-        <h2 className="text-lg font-semibold mb-2">Statistics</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-          <div className="p-4 bg-gray-800 rounded-lg">
-            <p className="text-gray-400">Total Profit</p>
-            <p className="text-green-400 text-xl">
-              {balanceData.length > 0
-                ? `${balanceData[balanceData.length - 1].balance.toFixed(2)}€`
-                : "0€"}
-            </p>
-          </div>
-          <div className="p-4 bg-gray-800 rounded-lg">
-            <p className="text-gray-400">Win Rate</p>
-            <p className="text-green-400 text-xl">
-              {pieData.length > 0
-                ? `${(
-                    (pieData[0].value / (pieData[0].value + pieData[1].value)) *
-                    100
-                  ).toFixed(2)}%`
-                : "0%"}
-            </p>
-          </div>
-          <div className="p-4 bg-gray-800 rounded-lg">
-            <p className="text-gray-400">Total Bets</p>
-            <p className="text-green-400 text-xl">
-              {pieData.length > 0 ? pieData[0].value + pieData[1].value : 0}
-            </p>
-          </div>
-        </div>
-      </div>
-
       {/* Istoric tranzacții */}
       <div className="mt-8">
-        <h2 className="text-lg font-semibold mb-2 text-center">
+        <h2 className="text-lg font-semibold mb-6 text-center ">
           Transaction History
         </h2>
         <div className="overflow-x-auto">

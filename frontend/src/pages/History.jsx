@@ -30,6 +30,7 @@ const History = () => {
   const [manualStartDate, setManualStartDate] = useState("");
   const [manualEndDate, setManualEndDate] = useState("");
   const [selectedProjects, setSelectedProjects] = useState(["All Projects"]);
+  const [selectedRange, setSelectedRange] = useState("customRange"); // Default to "customRange"
   const { balancing } = useContext(BalanceContext);
   const { projects } = useContext(ProjectsContext);
 
@@ -147,6 +148,8 @@ const History = () => {
       setSelectedRangeLabel(
         `Selected Range: ${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
       );
+      setManualStartDate(start.toISOString().split("T")[0]);
+      setManualEndDate(end.toISOString().split("T")[0]);
     } else {
       setSelectedRangeLabel("");
     }
@@ -192,6 +195,10 @@ const History = () => {
         start = new Date(today.getFullYear() - 1, 0, 1);
         end = new Date(today.getFullYear() - 1, 11, 31);
         break;
+      case "customRange":
+        start = null;
+        end = null;
+        break;
       default:
         start = null;
         end = null;
@@ -199,13 +206,18 @@ const History = () => {
 
     setStartDate(start);
     setEndDate(end);
+    setSelectedRange(range);
 
     if (start && end) {
       setSelectedRangeLabel(
         `Selected Range: ${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
       );
+      setManualStartDate(start.toISOString().split("T")[0]);
+      setManualEndDate(end.toISOString().split("T")[0]);
     } else {
       setSelectedRangeLabel("");
+      setManualStartDate("");
+      setManualEndDate("");
     }
   };
 
@@ -232,6 +244,13 @@ const History = () => {
   const sortedProfitLossData = [...profitLossData].sort(
     (a, b) => new Date(a.date) - new Date(b.date)
   );
+
+  const totalProfit =
+    balanceData.length > 0 ? balanceData[balanceData.length - 1].balance : 0;
+  const winRate =
+    pieData.length > 0 && pieData[0].value + pieData[1].value > 0
+      ? (pieData[0].value / (pieData[0].value + pieData[1].value)) * 100
+      : 0;
 
   return (
     <motion.div
@@ -279,8 +298,9 @@ const History = () => {
               <select
                 onChange={(e) => handleQuickRange(e.target.value)}
                 className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-700 text-white text-center"
+                value={selectedRange}
               >
-                <option value="">All Time</option>
+                <option value="customRange">Custom Range</option>
                 <option value="today">Today</option>
                 <option value="thisWeek">This Week</option>
                 <option value="thisMonth">This Month</option>
@@ -288,6 +308,7 @@ const History = () => {
                 <option value="lastWeek">Last Week</option>
                 <option value="lastMonth">Last Month</option>
                 <option value="lastYear">Last Year</option>
+                <option value="">All Time</option>
               </select>
               <div className="flex flex-col space-y-2">
                 <div className="flex flex-col">
@@ -297,6 +318,7 @@ const History = () => {
                     value={manualStartDate}
                     onChange={(e) => setManualStartDate(e.target.value)}
                     className="bg-gray-700 text-white p-2 rounded-lg text-center"
+                    disabled={selectedRange !== "customRange"}
                   />
                 </div>
                 <div className="flex flex-col">
@@ -306,14 +328,17 @@ const History = () => {
                     value={manualEndDate}
                     onChange={(e) => setManualEndDate(e.target.value)}
                     className="bg-gray-700 text-white p-2 rounded-lg text-center"
+                    disabled={selectedRange !== "customRange"}
                   />
                 </div>
-                <button
-                  onClick={handleManualRangeSubmit}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
-                >
-                  Apply
-                </button>
+                {selectedRange === "customRange" && (
+                  <button
+                    onClick={handleManualRangeSubmit}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+                  >
+                    Apply
+                  </button>
+                )}
               </div>
             </motion.div>
 
@@ -341,27 +366,29 @@ const History = () => {
               <div className="space-y-2">
                 {/* Total Profit */}
                 <div className="flex items-center justify-between p-2 bg-gray-700 rounded-lg gap-2">
-                  <p className="text-gray-400">Total Profit:</p>
-                  <p className="text-green-400 text-xl">
-                    {balanceData.length > 0
-                      ? `${balanceData[balanceData.length - 1].balance.toFixed(
-                          2
-                        )}`
-                      : "0"}
+                  <p className="text-gray-400">
+                    {totalProfit >= 0 ? "Total Profit:" : "Total Lost:"}
+                  </p>
+                  <p
+                    className={`text-xl ${
+                      totalProfit >= 0 ? "text-green-400" : "text-red-400"
+                    }`}
+                  >
+                    {totalProfit.toFixed(2)}€
                   </p>
                 </div>
 
                 {/* Win Rate */}
                 <div className="flex items-center justify-between p-2 bg-gray-700 rounded-lg gap-2">
-                  <p className="text-gray-400">Win Rate:</p>
-                  <p className="text-green-400 text-xl">
-                    {pieData.length > 0
-                      ? `${(
-                          (pieData[0].value /
-                            (pieData[0].value + pieData[1].value)) *
-                          100
-                        ).toFixed(2)}%`
-                      : "0%"}
+                  <p className="text-gray-400">
+                    {winRate >= 0 ? "Win Rate:" : "Lost Rate:"}
+                  </p>
+                  <p
+                    className={`text-xl ${
+                      winRate >= 0 ? "text-green-400" : "text-red-400"
+                    }`}
+                  >
+                    {winRate.toFixed(2)}%
                   </p>
                 </div>
 

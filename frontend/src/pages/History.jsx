@@ -148,8 +148,6 @@ const History = () => {
       setSelectedRangeLabel(
         `Selected Range: ${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
       );
-      setManualStartDate(start.toISOString().split("T")[0]);
-      setManualEndDate(end.toISOString().split("T")[0]);
     } else {
       setSelectedRangeLabel("");
     }
@@ -176,24 +174,24 @@ const History = () => {
         end = new Date(today.setDate(today.getDate() + 6));
         break;
       case "thisMonth":
-        start = new Date(today.getFullYear(), today.getMonth(), 1);
-        end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        start = new Date(today.getFullYear(), today.getMonth(), 1); // Prima zi a lunii curente
+        end = new Date(today.getFullYear(), today.getMonth() + 1, 0); // Ultima zi a lunii curente
         break;
       case "thisYear":
-        start = new Date(today.getFullYear(), 0, 1);
-        end = new Date(today.getFullYear(), 11, 31);
+        start = new Date(today.getFullYear(), 0, 1); // Prima zi a anului curent
+        end = new Date(today.getFullYear(), 11, 31); // Ultima zi a anului curent
         break;
       case "lastWeek":
         start = new Date(today.setDate(today.getDate() - today.getDay() - 7));
         end = new Date(today.setDate(today.getDate() + 6));
         break;
       case "lastMonth":
-        start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        end = new Date(today.getFullYear(), today.getMonth(), 0);
+        start = new Date(today.getFullYear(), today.getMonth() - 1, 1); // Prima zi a lunii trecute
+        end = new Date(today.getFullYear(), today.getMonth(), 0); // Ultima zi a lunii trecute
         break;
       case "lastYear":
-        start = new Date(today.getFullYear() - 1, 0, 1);
-        end = new Date(today.getFullYear() - 1, 11, 31);
+        start = new Date(today.getFullYear() - 1, 0, 1); // Prima zi a anului trecut
+        end = new Date(today.getFullYear() - 1, 11, 31); // Ultima zi a anului trecut
         break;
       case "customRange":
         start = null;
@@ -212,10 +210,12 @@ const History = () => {
       setSelectedRangeLabel(
         `Selected Range: ${start.toLocaleDateString()} - ${end.toLocaleDateString()}`
       );
-      setManualStartDate(start.toISOString().split("T")[0]);
-      setManualEndDate(end.toISOString().split("T")[0]);
     } else {
       setSelectedRangeLabel("");
+    }
+
+    // Resetăm manualStartDate și manualEndDate doar dacă nu este selectat Custom Range
+    if (range !== "customRange") {
       setManualStartDate("");
       setManualEndDate("");
     }
@@ -310,36 +310,34 @@ const History = () => {
                 <option value="lastYear">Last Year</option>
                 <option value="">All Time</option>
               </select>
-              <div className="flex flex-col space-y-2">
-                <div className="flex flex-col">
-                  <label className="text-gray-400 mb-1">Begin Date</label>
-                  <input
-                    type="date"
-                    value={manualStartDate}
-                    onChange={(e) => setManualStartDate(e.target.value)}
-                    className="bg-gray-700 text-white p-2 rounded-lg text-center"
-                    disabled={selectedRange !== "customRange"}
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-gray-400 mb-1">End Date</label>
-                  <input
-                    type="date"
-                    value={manualEndDate}
-                    onChange={(e) => setManualEndDate(e.target.value)}
-                    className="bg-gray-700 text-white p-2 rounded-lg text-center"
-                    disabled={selectedRange !== "customRange"}
-                  />
-                </div>
-                {selectedRange === "customRange" && (
+              {selectedRange === "customRange" && (
+                <div className="flex flex-col space-y-2">
+                  <div className="flex flex-col">
+                    <label className="text-gray-400 mb-1">Begin Date</label>
+                    <input
+                      type="date"
+                      value={manualStartDate}
+                      onChange={(e) => setManualStartDate(e.target.value)}
+                      className="bg-gray-700 text-white p-2 rounded-lg text-center"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <label className="text-gray-400 mb-1">End Date</label>
+                    <input
+                      type="date"
+                      value={manualEndDate}
+                      onChange={(e) => setManualEndDate(e.target.value)}
+                      className="bg-gray-700 text-white p-2 rounded-lg text-center"
+                    />
+                  </div>
                   <button
                     onClick={handleManualRangeSubmit}
                     className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
                   >
                     Apply
                   </button>
-                )}
-              </div>
+                </div>
+              )}
             </motion.div>
 
             {/* Coloana 3: Statistici (Total Profit, Win Rate, Total Bets) */}

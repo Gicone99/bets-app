@@ -598,7 +598,7 @@ const Calendar = () => {
         <span className="text-right text-green-400">
           Balance: {balance.toFixed(2)}
         </span>
-        <span className="text-green-400">User: {user}</span>
+        <span className="text-green-400">User: {user.username}</span>
       </div>
       <h1 className="text-3xl font-semibold text-center mb-6 text-green-400">
         Betting Calendar

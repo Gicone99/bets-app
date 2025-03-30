@@ -180,6 +180,26 @@ app.post("/logout", authenticateJWT, (req, res) => {
   });
 });
 
+// Get current user info
+app.get("/user", authenticateJWT, (req, res) => {
+  const username = req.user.username; // Username from the decoded JWT
+
+  // Find user details
+  const query = "SELECT username, email, balance FROM users WHERE username = ?";
+  db.query(query, [username], (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const user = results[0];
+    res.json({ user });
+  });
+});
+
 // get ticket info for current user
 app.get("/data", authenticateJWT, (req, res) => {
   const username = req.user.username; // Username from the decoded JWT

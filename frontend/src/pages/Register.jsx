@@ -7,10 +7,6 @@ const Register = () => {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleCloseSnackbar = () => {
-    setOpenSnackbar(false);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log("Submitting:", { username, email, password });

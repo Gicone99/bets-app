@@ -16,6 +16,7 @@ import Projects from "./pages/Projects";
 import Profile from "./pages/Profile";
 import { BalanceProvider } from "./context/BalanceContext";
 import { ProjectsProvider } from "./context/ProjectsContext";
+import { UserProvider } from "./context/UserContext";
 
 const router = createBrowserRouter([
   {
@@ -61,11 +62,13 @@ const router = createBrowserRouter([
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <BalanceProvider>
-      <ProjectsProvider>
-        <RouterProvider router={router} />
-      </ProjectsProvider>
-    </BalanceProvider>
+    <UserProvider>
+      <BalanceProvider>
+        <ProjectsProvider>
+          <RouterProvider router={router} />
+        </ProjectsProvider>
+      </BalanceProvider>
+    </UserProvider>
   </React.StrictMode>
 );
 

@@ -10,7 +10,7 @@ const moment = require("moment");
 dotenv.config();
 
 const app = express();
-const port = 3070;
+const port = 3000;
 
 // Middleware to parse JSON requests
 app.use(express.json());

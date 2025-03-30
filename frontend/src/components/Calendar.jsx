@@ -4,15 +4,13 @@ import {
   FaTrash,
   FaUser,
   FaHome,
-  FaSignInAlt,
-  FaUserPlus,
-  FaSignOutAlt,
   FaHistory,
   FaRProject,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { BalanceContext } from "../context/BalanceContext";
 import { ProjectsContext } from "../context/ProjectsContext";
+import { UserContext } from "../context/UserContext";
 
 const EditBetPopup = ({
   onClose,
@@ -215,14 +213,12 @@ const Calendar = () => {
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [editBetId, setEditBetId] = useState(null);
   const { balance, setBalance } = useContext(BalanceContext);
+  const { user, setUser } = useContext(UserContext);
   const { projects, setProjects } = useContext(ProjectsContext);
   const [selectedProject, setSelectedProject] = useState(null);
 
   const navigate = useNavigate();
   const handleHomeClick = () => navigate("/");
-  const handleLoginClick = () => navigate("/login");
-  const handleRegisterClick = () => navigate("/register");
-  const handleLogoutClick = () => navigate("/logout");
   const handleHistoryClick = () => navigate("/history");
   const handleProjectsClick = () => navigate("/projects");
   const handleUserIconClick = () => navigate("/profile");
@@ -578,25 +574,6 @@ const Calendar = () => {
             <FaHome className="mr-2" /> Home
           </button>
           <button
-            onClick={handleLoginClick}
-            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
-          >
-            <FaSignInAlt className="mr-2" /> Login
-          </button>
-          <button
-            onClick={handleRegisterClick}
-            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
-          >
-            <FaUserPlus className="mr-2" /> Register
-          </button>
-          <button
-            onClick={handleLogoutClick}
-            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
-          >
-            <FaSignOutAlt className="mr-2" /> Logout
-          </button>
-
-          <button
             onClick={handleHistoryClick}
             className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
           >
@@ -621,6 +598,7 @@ const Calendar = () => {
         <span className="text-right text-green-400">
           Balance: {balance.toFixed(2)}
         </span>
+        <span className="text-green-400">User: {user}</span>
       </div>
       <h1 className="text-3xl font-semibold text-center mb-6 text-green-400">
         Betting Calendar

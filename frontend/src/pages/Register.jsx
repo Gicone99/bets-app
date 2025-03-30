@@ -16,7 +16,7 @@ const Register = () => {
     console.log("Submitting:", { username, email, password });
 
     try {
-      const response = await fetch("http://localhost:3070/register", {
+      const response = await fetch("http://localhost:3000/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

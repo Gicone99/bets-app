@@ -9,7 +9,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFsZ
 
 ###
 
-POST http://localhost:3070/register
+POST http://localhost:3000/register
 content-type: application/json
 
 {
@@ -20,7 +20,7 @@ content-type: application/json
 
 ###
 
-POST http://localhost:3070/login
+POST http://localhost:3000/login
 content-type: application/json
 
 {
@@ -45,7 +45,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFsZ
 
 ###
 
-POST http://localhost:3070/addbalance
+POST http://localhost:3000/addbalance
 content-type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFsZXgiLCJpYXQiOjE3NDIyNDQ2OTQsImV4cCI6MTc0MjI0ODI5NH0.B9olEA1StMaXL94TSaVHOw0HJfr9d3ui1L15YkqZ8nc
 
@@ -55,7 +55,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFsZ
 
 ###
 
-POST http://localhost:3070/forceaddbalance
+POST http://localhost:3000/forceaddbalance
 content-type: application/json
 
 {

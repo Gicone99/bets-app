@@ -1,10 +1,20 @@
 import React, { useState, useContext } from "react";
 import { BalanceContext } from "../context/BalanceContext";
+import { FaSignInAlt, FaUserPlus, FaSignOutAlt } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
   const { balance, setBalance } = useContext(BalanceContext);
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
+  const handleLoginClick = () => navigate("/login");
+  const navigate = useNavigate();
+  const handleHomeClick = () => navigate("/");
+  const handleRegisterClick = () => navigate("/register");
+  const handleLogoutClick = () => navigate("/logout");
+  const handleHistoryClick = () => navigate("/history");
+  const handleProjectsClick = () => navigate("/projects");
+  const handleUserIconClick = () => navigate("/profile");
 
   const handleDeposit = () => {
     const amount = parseFloat(depositAmount);
@@ -18,7 +28,7 @@ const Profile = () => {
     }
 
     //sample fetch forceaddbalance
-    // fetch("http://localhost:3070/forceaddbalance", {
+    // fetch("http://localhost:3000/forceaddbalance", {
     //   method: "post",
     //   headers: {
     //     "Content-Type": "application/json",
@@ -120,6 +130,27 @@ const Profile = () => {
         <p className="text-gray-400">
           Settings functionality will be added later.
         </p>
+
+        <div className="flex space-x-4">
+          <button
+            onClick={handleLoginClick}
+            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+          >
+            <FaSignInAlt className="mr-2" /> Login
+          </button>
+          <button
+            onClick={handleLogoutClick}
+            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+          >
+            <FaSignOutAlt className="mr-2" /> Logout
+          </button>
+          <button
+            onClick={handleRegisterClick}
+            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+          >
+            <FaUserPlus className="mr-2" /> Register
+          </button>
+        </div>
       </div>
     </div>
   );

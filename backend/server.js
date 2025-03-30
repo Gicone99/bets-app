@@ -200,6 +200,26 @@ app.get("/user", authenticateJWT, (req, res) => {
   });
 });
 
+// Get user balance
+app.get("/balance", authenticateJWT, (req, res) => {
+  const username = req.user.username;
+
+  const query =
+    "SELECT CAST(balance AS DECIMAL(10,2)) as balance FROM users WHERE username = ?";
+  db.query(query, [username], (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Asigură-te că trimitem un număr, nu un string
+    res.json({ balance: parseFloat(results[0].balance) });
+  });
+});
+
 // get ticket info for current user
 app.get("/data", authenticateJWT, (req, res) => {
   const username = req.user.username; // Username from the decoded JWT
@@ -262,17 +282,37 @@ app.post("/ticket", authenticateJWT, (req, res) => {
 // add balance by current user
 app.post("/addbalance", authenticateJWT, (req, res) => {
   const { amount } = req.body;
-  const username = req.user.username; // Username from the decoded JWT
+  const username = req.user.username;
 
   if (!amount) {
-    return res.status(400).json({ message: "Ticket information is required" });
+    return res.status(400).json({ message: "Amount is required" });
   }
 
-  const query = "UPDATE users SET balance = balance + ? WHERE username = ?";
-  db.query(query, [amount, username], (err, results) => {
+  // First update the balance
+  const updateQuery =
+    "UPDATE users SET balance = balance + ? WHERE username = ?";
+  db.query(updateQuery, [amount, username], (err, updateResult) => {
     if (err) {
       return res.status(500).json({ message: "Database error", error: err });
     }
+
+    // Then get the new balance to return it
+    const selectQuery = "SELECT balance FROM users WHERE username = ?";
+    db.query(selectQuery, [username], (err, selectResults) => {
+      if (err) {
+        return res.status(500).json({ message: "Database error", error: err });
+      }
+
+      if (selectResults.length === 0) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const newBalance = selectResults[0].balance;
+      res.json({
+        message: "Balance updated successfully",
+        newBalance,
+      });
+    });
   });
 });
 

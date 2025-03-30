@@ -596,7 +596,9 @@ const Calendar = () => {
           </button>
         </div>
         <span className="text-right text-green-400">
-          Balance: {balance.toFixed(2)}
+          {(() => {
+            return `Balance: ${Number(user?.balance || 0).toFixed(2)}`;
+          })()}
         </span>
         <span className="text-green-400">User: {user.username}</span>
       </div>

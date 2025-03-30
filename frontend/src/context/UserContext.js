@@ -4,7 +4,7 @@ import axios from "axios";
 export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState("Guest");
 
   // Function to fetch user data
   const fetchUserData = async () => {

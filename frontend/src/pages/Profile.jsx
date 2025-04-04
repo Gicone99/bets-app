@@ -26,7 +26,7 @@ const Profile = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:3001/updatebalance",
+        "http://localhost:3000/updatebalance",
         { amount }, // Trimite amount pozitiv pentru deposit
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -54,7 +54,7 @@ const Profile = () => {
     try {
       const token = localStorage.getItem("token");
       const response = await axios.post(
-        "http://localhost:3001/deposit",
+        "http://localhost:3000/deposit",
         { amount },
         {
           headers: {
@@ -80,7 +80,7 @@ const Profile = () => {
       // Reîmprospătează balanța indiferent de eroare
       try {
         const balanceResponse = await axios.get(
-          "http://localhost:3001/balance",
+          "http://localhost:3000/balance",
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -111,7 +111,7 @@ const Profile = () => {
       }
 
       const response = await axios.post(
-        "http://localhost:3001/withdraw",
+        "http://localhost:3000/withdraw",
         { amount },
         {
           headers: {

@@ -10,7 +10,7 @@ const moment = require("moment");
 dotenv.config();
 
 const app = express();
-const port = 3001;
+const port = 3000;
 
 // Middleware to parse JSON requests
 app.use(express.json());
@@ -71,6 +71,28 @@ function authenticateJWT(req, res, next) {
     });
   });
 }
+
+// server.js (backend)
+app.get("/api/matches", async (req, res) => {
+  try {
+    const response = await fetch("https://api.football-data.org/v4/matches", {
+      headers: { "X-Auth-Token": "978009eeb2b14289a1f8fb751c79959e" }, // Cheia e gratuită
+    });
+    const data = await response.json();
+    res.json(data.matches);
+  } catch (error) {
+    // Fallback la date mock
+    res.json([
+      {
+        id: 1,
+        homeTeam: { name: "Barcelona" },
+        awayTeam: { name: "Real Madrid" },
+        utcDate: new Date().toISOString(),
+        competition: { name: "La Liga" },
+      },
+    ]);
+  }
+});
 
 // Register a new user
 app.post("/register", async (req, res) => {

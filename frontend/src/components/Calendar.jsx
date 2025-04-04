@@ -6,6 +6,7 @@ import {
   FaHome,
   FaHistory,
   FaRProject,
+  FaFutbol,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { BalanceContext } from "../context/BalanceContext";
@@ -222,6 +223,7 @@ const Calendar = () => {
   const handleHistoryClick = () => navigate("/history");
   const handleProjectsClick = () => navigate("/projects");
   const handleUserIconClick = () => navigate("/profile");
+  const handleMatchesClick = () => navigate("/livematches");
 
   // Încărcăm pariurile din localStorage
   useEffect(() => {
@@ -585,6 +587,13 @@ const Calendar = () => {
             className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
           >
             <FaRProject className="mr-2" /> Projects
+          </button>
+
+          <button
+            onClick={handleMatchesClick}
+            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+          >
+            <FaFutbol className="mr-2" /> Live Matches
           </button>
 
           {/* Butonul pentru User și Balance în dreapta */}

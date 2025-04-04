@@ -14,6 +14,7 @@ import Logout from "./pages/Logout";
 import History from "./pages/History";
 import Projects from "./pages/Projects";
 import Profile from "./pages/Profile";
+import LiveMatches from "./pages/LiveMatches";
 import { BalanceProvider } from "./context/BalanceContext";
 import { ProjectsProvider } from "./context/ProjectsContext";
 import { UserProvider } from "./context/UserContext";
@@ -54,6 +55,10 @@ const router = createBrowserRouter([
       {
         path: "/profile",
         element: <Profile />,
+      },
+      {
+        path: "/livematches",
+        element: <LiveMatches />,
       },
     ],
   },

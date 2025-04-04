@@ -19,7 +19,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:3001/login", {
+      const response = await fetch("http://localhost:3000/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -52,7 +52,7 @@ const Login = () => {
 
   useEffect(() => {
     if (error) {
-      const timer = setTimeout(() => setError(false), 3001);
+      const timer = setTimeout(() => setError(false), 3000);
       return () => clearTimeout(timer);
     }
   }, [error]);

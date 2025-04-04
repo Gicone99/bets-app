@@ -10,7 +10,7 @@ const moment = require("moment");
 dotenv.config();
 
 const app = express();
-const port = 3000;
+const port = 3001;
 
 // Middleware to parse JSON requests
 app.use(express.json());
@@ -218,6 +218,128 @@ app.get("/balance", authenticateJWT, (req, res) => {
     // Asigură-te că trimitem un număr, nu un string
     res.json({ balance: parseFloat(results[0].balance) });
   });
+});
+
+// DEPOSIT endpoint - versiune optimizată
+app.post("/deposit", authenticateJWT, async (req, res) => {
+  let connection;
+  try {
+    const { amount } = req.body;
+    const username = req.user.username;
+
+    // Validare
+    if (typeof amount !== "number" || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Amount must be a positive number",
+      });
+    }
+
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    // 1. Actualizare balanță
+    await connection.query(
+      "UPDATE users SET balance = ROUND(balance + ?, 2) WHERE username = ?",
+      [amount, username]
+    );
+
+    // 2. Obține balanța actualizată
+    const [[user]] = await connection.query(
+      "SELECT ROUND(balance, 2) as balance FROM users WHERE username = ?",
+      [username]
+    );
+
+    await connection.commit();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Răspuns SUCCES cu noua balanță
+    res.json({
+      success: true,
+      newBalance: user.balance, // Asigură-te că această valoare este trimisă
+    });
+  } catch (error) {
+    if (connection) {
+      await connection.rollback();
+    }
+    console.error("Deposit error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Database operation succeeded but response failed", // Mesaj clar
+      error: error.message,
+    });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
+});
+
+// Endpoint pentru withdraw
+app.post("/withdraw", authenticateJWT, async (req, res) => {
+  const { amount } = req.body;
+  const username = req.user.username;
+
+  // Validare amount
+  if (typeof amount !== "number" || amount <= 0 || !Number.isFinite(amount)) {
+    return res.status(400).json({
+      success: false,
+      message: "Amount must be a positive number",
+    });
+  }
+
+  try {
+    // 1. Verificăm soldul curent
+    const [current] = await db.query(
+      "SELECT ROUND(balance, 2) as balance FROM users WHERE username = ?",
+      [username]
+    );
+
+    if (!current.length) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const currentBalance = current[0].balance;
+
+    // 2. Verificăm fonduri suficiente
+    if (currentBalance < amount) {
+      return res.status(400).json({
+        success: false,
+        message: "Insufficient funds",
+        currentBalance,
+      });
+    }
+
+    // 3. Actualizăm balanța
+    await db.query(
+      "UPDATE users SET balance = ROUND(balance - ?, 2) WHERE username = ?",
+      [amount, username]
+    );
+
+    // 4. Returnăm noua balanță
+    const [result] = await db.query(
+      "SELECT ROUND(balance, 2) as balance FROM users WHERE username = ?",
+      [username]
+    );
+
+    res.json({
+      success: true,
+      newBalance: result[0].balance,
+    });
+  } catch (err) {
+    console.error("Withdraw error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Database error",
+      error: err.message,
+    });
+  }
 });
 
 // get ticket info for current user

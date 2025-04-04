@@ -1,75 +1,149 @@
 import React, { useState, useContext } from "react";
 import { BalanceContext } from "../context/BalanceContext";
+import { UserContext } from "../context/UserContext";
 import { FaSignInAlt, FaUserPlus, FaSignOutAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Profile = () => {
   const { balance, setBalance } = useContext(BalanceContext);
+  const { user } = useContext(UserContext);
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
-  const handleLoginClick = () => navigate("/login");
   const navigate = useNavigate();
+
+  // Navigation handlers
+  const handleLoginClick = () => navigate("/login");
   const handleHomeClick = () => navigate("/");
   const handleRegisterClick = () => navigate("/register");
   const handleLogoutClick = () => navigate("/logout");
   const handleHistoryClick = () => navigate("/history");
   const handleProjectsClick = () => navigate("/projects");
-  const handleUserIconClick = () => navigate("/profile");
 
-  const handleDeposit = () => {
-    const amount = parseFloat(depositAmount);
-    if (isNaN(amount)) {
-      alert("Please enter a valid number for deposit.");
-      return;
+  const handleTransaction = async (type, amount) => {
+    const endpoint = type === "deposit" ? "/deposit" : "/withdraw";
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await axios.post(
+        "http://localhost:3001/updatebalance",
+        { amount }, // Trimite amount pozitiv pentru deposit
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (response.data.success) {
+        setBalance(response.data.newBalance);
+        return true;
+      }
+      alert(`Transaction failed: ${response.data.message}`);
+      return false;
+    } catch (error) {
+      alert(`Error: ${error.response?.data?.message || error.message}`);
+      return false;
     }
-    if (amount <= 0) {
-      alert("Deposit amount must be greater than 0.");
-      return;
-    }
-
-    //sample fetch forceaddbalance
-    // fetch("http://localhost:3000/forceaddbalance", {
-    //   method: "post",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify({
-    //     username: "gicone",
-    //     amount: amount,
-    //   }),
-    // })
-    //   .then((response) => {
-    //     if (!response.ok) {
-    //       throw new Error("Invalid credentials");
-    //     }
-    //     return response.json();
-    //   })
-    //   .then((data) => {
-    //     console.log(data.Raspuns);
-    //   });
-
-    setBalance((prevBalance) => prevBalance + amount);
-    setDepositAmount("");
-    alert(`Successfully deposited $${amount.toFixed(2)}.`);
   };
 
-  const handleWithdraw = () => {
+  const handleDeposit = async () => {
+    const amount = parseFloat(depositAmount);
+
+    if (isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid positive number");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        "http://localhost:3001/deposit",
+        { amount },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success) {
+        // Actualizează starea CU VALOAREA DIN RĂSPUNS
+        setBalance(response.data.newBalance);
+        setDepositAmount("");
+        alert(
+          `Deposit successful! New balance: $${response.data.newBalance.toFixed(
+            2
+          )}`
+        );
+      }
+    } catch (error) {
+      console.error("Deposit error:", error);
+      alert(`Error: ${error.response?.data?.message || error.message}`);
+
+      // Reîmprospătează balanța indiferent de eroare
+      try {
+        const balanceResponse = await axios.get(
+          "http://localhost:3001/balance",
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        setBalance(balanceResponse.data.balance);
+      } catch (refreshError) {
+        console.error("Balance refresh failed:", refreshError);
+      }
+    }
+  };
+
+  const handleWithdraw = async () => {
     const amount = parseFloat(withdrawAmount);
-    if (isNaN(amount)) {
-      alert("Please enter a valid number for withdrawal.");
+
+    // Validare frontend
+    if (isNaN(amount) || amount <= 0) {
+      alert("Please enter a valid positive number");
       return;
     }
-    if (amount <= 0) {
-      alert("Withdrawal amount must be greater than 0.");
-      return;
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("You need to login first");
+        return;
+      }
+
+      const response = await axios.post(
+        "http://localhost:3001/withdraw",
+        { amount },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        setBalance(response.data.newBalance);
+        setWithdrawAmount("");
+        alert(`Successfully withdrew $${amount.toFixed(2)}`);
+      } else {
+        alert(`Withdrawal failed: ${response.data.message}`);
+      }
+    } catch (error) {
+      console.error("Withdraw error:", error);
+      const errorMsg =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message;
+
+      // Mesaj special pentru fonduri insuficiente
+      if (error.response?.data?.message === "Insufficient funds") {
+        alert(
+          `Insufficient funds. Current balance: $${error.response.data.currentBalance}`
+        );
+      } else {
+        alert(`Error: ${errorMsg}`);
+      }
     }
-    if (amount > balance) {
-      alert("Insufficient funds for withdrawal.");
-      return;
-    }
-    setBalance((prevBalance) => prevBalance - amount);
-    setWithdrawAmount("");
-    alert(`Successfully withdrew $${amount.toFixed(2)}.`);
   };
 
   return (
@@ -81,7 +155,11 @@ const Profile = () => {
       {/* Balance Display */}
       <div className="text-center mb-8">
         <h2 className="text-xl font-bold text-green-400">Current Balance</h2>
-        <p className="text-2xl text-green-500">${balance.toFixed(2)}</p>
+        <p className="text-2xl text-green-500">
+          {(() => {
+            return `Balance: ${Number(user?.balance || 0).toFixed(2)}`;
+          })()}
+        </p>
       </div>
 
       {/* Deposit Section */}
@@ -97,7 +175,7 @@ const Profile = () => {
           />
           <button
             onClick={handleDeposit}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 rounded-lg focus:outline-none whitespace-nowrap"
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg"
           >
             Deposit
           </button>
@@ -117,40 +195,51 @@ const Profile = () => {
           />
           <button
             onClick={handleWithdraw}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 rounded-lg focus:outline-none whitespace-nowrap"
+            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg"
           >
             Withdraw
           </button>
         </div>
       </div>
 
-      {/* Settings Section */}
-      <div>
-        <h2 className="text-xl font-bold text-green-400 mb-4">Settings</h2>
-        <p className="text-gray-400">
-          Settings functionality will be added later.
-        </p>
-
-        <div className="flex space-x-4">
-          <button
-            onClick={handleLoginClick}
-            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
-          >
-            <FaSignInAlt className="mr-2" /> Login
-          </button>
-          <button
-            onClick={handleLogoutClick}
-            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
-          >
-            <FaSignOutAlt className="mr-2" /> Logout
-          </button>
-          <button
-            onClick={handleRegisterClick}
-            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
-          >
-            <FaUserPlus className="mr-2" /> Register
-          </button>
-        </div>
+      {/* Navigation Buttons */}
+      <div className="flex flex-wrap gap-4 justify-center mt-8">
+        <button
+          onClick={handleHomeClick}
+          className="flex items-center text-green-400 hover:text-green-500 transition px-4 py-2 border border-green-400 rounded-lg"
+        >
+          Home
+        </button>
+        <button
+          onClick={handleHistoryClick}
+          className="flex items-center text-green-400 hover:text-green-500 transition px-4 py-2 border border-green-400 rounded-lg"
+        >
+          History
+        </button>
+        <button
+          onClick={handleProjectsClick}
+          className="flex items-center text-green-400 hover:text-green-500 transition px-4 py-2 border border-green-400 rounded-lg"
+        >
+          Projects
+        </button>
+        <button
+          onClick={handleLoginClick}
+          className="flex items-center text-green-400 hover:text-green-500 transition px-4 py-2 border border-green-400 rounded-lg"
+        >
+          <FaSignInAlt className="mr-2" /> Login
+        </button>
+        <button
+          onClick={handleLogoutClick}
+          className="flex items-center text-green-400 hover:text-green-500 transition px-4 py-2 border border-green-400 rounded-lg"
+        >
+          <FaSignOutAlt className="mr-2" /> Logout
+        </button>
+        <button
+          onClick={handleRegisterClick}
+          className="flex items-center text-green-400 hover:text-green-500 transition px-4 py-2 border border-green-400 rounded-lg"
+        >
+          <FaUserPlus className="mr-2" /> Register
+        </button>
       </div>
     </div>
   );

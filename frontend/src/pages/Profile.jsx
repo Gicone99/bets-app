@@ -6,143 +6,94 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const Profile = () => {
-  const { balance, setBalance } = useContext(BalanceContext);
+  const { setBalance } = useContext(BalanceContext);
   const { user } = useContext(UserContext);
   const [depositAmount, setDepositAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Navigation handlers
-  const handleLoginClick = () => navigate("/login");
-  const handleHomeClick = () => navigate("/");
-  const handleRegisterClick = () => navigate("/register");
-  const handleLogoutClick = () => navigate("/logout");
-  const handleHistoryClick = () => navigate("/history");
-  const handleProjectsClick = () => navigate("/projects");
-
-  const handleTransaction = async (type, amount) => {
-    const endpoint = type === "deposit" ? "/deposit" : "/withdraw";
-    const token = localStorage.getItem("token");
-
-    try {
-      const response = await axios.post(
-        "http://localhost:3004/updatebalance",
-        { amount }, // Trimite amount pozitiv pentru deposit
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      if (response.data.success) {
-        setBalance(response.data.newBalance);
-        return true;
-      }
-      alert(`Transaction failed: ${response.data.message}`);
-      return false;
-    } catch (error) {
-      alert(`Error: ${error.response?.data?.message || error.message}`);
-      return false;
-    }
+  const navigationHandlers = {
+    login: () => navigate("/login"),
+    home: () => navigate("/"),
+    register: () => navigate("/register"),
+    logout: () => navigate("/logout"),
+    history: () => navigate("/history"),
+    projects: () => navigate("/projects"),
   };
 
-  const handleDeposit = async () => {
-    const amount = parseFloat(depositAmount);
-
-    if (isNaN(amount) || amount <= 0) {
-      alert("Please enter a valid positive number");
+  const handleAmountChange = (value, setter) => {
+    if (value === "") {
+      setter("");
       return;
     }
 
+    const regex = /^\d*\.?\d{0,2}$/;
+    if (regex.test(value)) {
+      setter(value);
+    }
+  };
+
+  const handleTransaction = async (amount, isDeposit) => {
+    const numericAmount = parseFloat(amount);
+    const currentBalance = parseFloat(user?.balance || 0);
+
+    if (!amount || isNaN(numericAmount) || numericAmount <= 0) {
+      setError(
+        `Please enter a valid ${isDeposit ? "deposit" : "withdrawal"} amount`
+      );
+      return;
+    }
+
+    if (!isDeposit && numericAmount > currentBalance) {
+      setError(
+        `You cannot withdraw more than your current balance (${currentBalance.toFixed(
+          2
+        )})`
+      );
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+    setSuccess("");
+
     try {
-      const token = localStorage.getItem("token");
+      const transactionAmount = isDeposit ? numericAmount : -numericAmount;
       const response = await axios.post(
-        "http://localhost:3004/deposit",
-        { amount },
+        "http://localhost:3008/addbalance",
+        { amount: transactionAmount },
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
         }
       );
 
-      if (response.data.success) {
-        // Actualizează starea CU VALOAREA DIN RĂSPUNS
-        setBalance(response.data.newBalance);
-        setDepositAmount("");
-        alert(
-          `Deposit successful! New balance: $${response.data.newBalance.toFixed(
-            2
-          )}`
-        );
-      }
-    } catch (error) {
-      console.error("Deposit error:", error);
-      alert(`Error: ${error.response?.data?.message || error.message}`);
-
-      // Reîmprospătează balanța indiferent de eroare
-      try {
-        const balanceResponse = await axios.get(
-          "http://localhost:3004/balance",
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-            },
-          }
-        );
-        setBalance(balanceResponse.data.balance);
-      } catch (refreshError) {
-        console.error("Balance refresh failed:", refreshError);
-      }
-    }
-  };
-
-  const handleWithdraw = async () => {
-    const amount = parseFloat(withdrawAmount);
-
-    // Validare frontend
-    if (isNaN(amount) || amount <= 0) {
-      alert("Please enter a valid positive number");
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("You need to login first");
-        return;
+      if (!response.data?.newBalance) {
+        throw new Error("Invalid server response");
       }
 
-      const response = await axios.post(
-        "http://localhost:3004/withdraw",
-        { amount },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+      setBalance(response.data.newBalance);
+      isDeposit ? setDepositAmount("") : setWithdrawAmount("");
+
+      // Set success message
+      const successMessage = isDeposit
+        ? `Successfully deposited $${numericAmount.toFixed(2)}`
+        : `Successfully withdrew $${numericAmount.toFixed(2)}`;
+      setSuccess(successMessage);
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          `${isDeposit ? "Deposit" : "Withdrawal"} failed. Please try again.`
       );
-
-      if (response.data.success) {
-        setBalance(response.data.newBalance);
-        setWithdrawAmount("");
-        alert(`Successfully withdrew $${amount.toFixed(2)}`);
-      } else {
-        alert(`Withdrawal failed: ${response.data.message}`);
-      }
-    } catch (error) {
-      console.error("Withdraw error:", error);
-      const errorMsg =
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        error.message;
-
-      // Mesaj special pentru fonduri insuficiente
-      if (error.response?.data?.message === "Insufficient funds") {
-        alert(
-          `Insufficient funds. Current balance: $${error.response.data.currentBalance}`
-        );
-      } else {
-        alert(`Error: ${errorMsg}`);
-      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -156,90 +107,96 @@ const Profile = () => {
       <div className="text-center mb-8">
         <h2 className="text-xl font-bold text-green-400">Current Balance</h2>
         <p className="text-2xl text-green-500">
-          {(() => {
-            return `Balance: ${Number(user?.balance || 0).toFixed(2)}`;
-          })()}
+          Balance: {Number(user?.balance || 0).toFixed(2)}
         </p>
       </div>
 
-      {/* Deposit Section */}
-      <div className="mb-8">
-        <h2 className="text-xl font-bold text-green-400 mb-4">Deposit</h2>
-        <div className="flex justify-between gap-8">
-          <input
-            type="text"
-            placeholder="Enter deposit amount"
-            value={depositAmount}
-            onChange={(e) => setDepositAmount(e.target.value)}
-            className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center"
-          />
-          <button
-            onClick={handleDeposit}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg"
-          >
-            Deposit
-          </button>
+      {/* Error Message */}
+      {error && (
+        <div className="mb-4 p-2 bg-red-500 text-white rounded text-center">
+          {error}
         </div>
-      </div>
+      )}
 
-      {/* Withdraw Section */}
-      <div className="mb-8">
-        <h2 className="text-xl font-bold text-green-400 mb-4">Withdraw</h2>
-        <div className="flex justify-between gap-8">
-          <input
-            type="text"
-            placeholder="Enter withdrawal amount"
-            value={withdrawAmount}
-            onChange={(e) => setWithdrawAmount(e.target.value)}
-            className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center"
-          />
-          <button
-            onClick={handleWithdraw}
-            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg"
-          >
-            Withdraw
-          </button>
+      {/* Success Message */}
+      {success && (
+        <div className="mb-4 p-2 bg-green-500 text-white rounded text-center">
+          {success}
         </div>
-      </div>
+      )}
+
+      {/* Loading Indicator */}
+      {isLoading && (
+        <div className="mb-4 text-center text-green-400">Processing...</div>
+      )}
+
+      {/* Transaction Sections */}
+      {["deposit", "withdraw"].map((type) => {
+        const isDeposit = type === "deposit";
+        const amount = isDeposit ? depositAmount : withdrawAmount;
+        const setAmount = isDeposit ? setDepositAmount : setWithdrawAmount;
+
+        return (
+          <div key={type} className="mb-8">
+            <h2 className="text-xl font-bold text-green-400 mb-4">
+              {isDeposit ? "Deposit" : "Withdraw"}
+            </h2>
+            <div className="flex justify-between gap-8">
+              <input
+                type="text"
+                inputMode="decimal"
+                pattern="\d*\.?\d{0,2}"
+                placeholder={`Enter ${type} amount`}
+                value={amount}
+                onChange={(e) => handleAmountChange(e.target.value, setAmount)}
+                className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center"
+                disabled={isLoading}
+              />
+              <button
+                onClick={() => handleTransaction(amount, isDeposit)}
+                disabled={isLoading || !amount}
+                className={`bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg ${
+                  isLoading ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+              >
+                {isDeposit ? "Deposit" : "Withdraw"}
+              </button>
+            </div>
+          </div>
+        );
+      })}
 
       {/* Navigation Buttons */}
       <div className="flex flex-wrap gap-4 justify-center mt-8">
-        <button
-          onClick={handleHomeClick}
-          className="flex items-center text-green-400 hover:text-green-500 transition px-4 py-2 border border-green-400 rounded-lg"
-        >
-          Home
-        </button>
-        <button
-          onClick={handleHistoryClick}
-          className="flex items-center text-green-400 hover:text-green-500 transition px-4 py-2 border border-green-400 rounded-lg"
-        >
-          History
-        </button>
-        <button
-          onClick={handleProjectsClick}
-          className="flex items-center text-green-400 hover:text-green-500 transition px-4 py-2 border border-green-400 rounded-lg"
-        >
-          Projects
-        </button>
-        <button
-          onClick={handleLoginClick}
-          className="flex items-center text-green-400 hover:text-green-500 transition px-4 py-2 border border-green-400 rounded-lg"
-        >
-          <FaSignInAlt className="mr-2" /> Login
-        </button>
-        <button
-          onClick={handleLogoutClick}
-          className="flex items-center text-green-400 hover:text-green-500 transition px-4 py-2 border border-green-400 rounded-lg"
-        >
-          <FaSignOutAlt className="mr-2" /> Logout
-        </button>
-        <button
-          onClick={handleRegisterClick}
-          className="flex items-center text-green-400 hover:text-green-500 transition px-4 py-2 border border-green-400 rounded-lg"
-        >
-          <FaUserPlus className="mr-2" /> Register
-        </button>
+        {[
+          { label: "Home", handler: "home" },
+          { label: "History", handler: "history" },
+          { label: "Projects", handler: "projects" },
+          {
+            label: "Login",
+            handler: "login",
+            icon: <FaSignInAlt className="mr-2" />,
+          },
+          {
+            label: "Logout",
+            handler: "logout",
+            icon: <FaSignOutAlt className="mr-2" />,
+          },
+          {
+            label: "Register",
+            handler: "register",
+            icon: <FaUserPlus className="mr-2" />,
+          },
+        ].map((btn) => (
+          <button
+            key={btn.handler}
+            onClick={navigationHandlers[btn.handler]}
+            className="flex items-center text-green-400 hover:text-green-500 transition px-4 py-2 border border-green-400 rounded-lg"
+          >
+            {btn.icon}
+            {btn.label}
+          </button>
+        ))}
       </div>
     </div>
   );

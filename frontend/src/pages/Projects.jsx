@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { ProjectsContext } from "../context/ProjectsContext"; // Importă contextul
+import { ProjectsContext } from "../context/ProjectsContext";
 
 const Projects = () => {
   const { projects, setProjects } = useContext(ProjectsContext);

@@ -13,7 +13,7 @@ export const BalanceProvider = ({ children }) => {
       const token = localStorage.getItem("token");
       if (!token || !user) return;
 
-      const response = await axios.get("http://localhost:3004/balance", {
+      const response = await axios.get("http://localhost:3008/balance", {
         headers: {
           Authorization: `Bearer ${token}`,
         },

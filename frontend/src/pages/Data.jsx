@@ -10,7 +10,7 @@ export default function Data() {
     // in backend we check if the token is set in header under the key: Authorization and if the value starts with Bearer as in the standards of JWT
     if (localStorage.getItem("token")) {
       console.log("effect data here");
-      fetch("http://localhost:3000/data", {
+      fetch("http://localhost:3004/data", {
         method: "get",
         headers: {
           "Content-Type": "application/json",
@@ -27,7 +27,7 @@ export default function Data() {
 
   function addTicket(e) {
     e.preventDefault();
-    fetch("http://localhost:3000/ticket", {
+    fetch("http://localhost:3004/ticket", {
       method: "post",
       headers: {
         "Content-Type": "application/json",

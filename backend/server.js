@@ -10,7 +10,7 @@ const moment = require("moment");
 dotenv.config();
 
 const app = express();
-const port = 3000;
+const port = 3004;
 
 // Middleware to parse JSON requests
 app.use(express.json());
@@ -72,27 +72,25 @@ function authenticateJWT(req, res, next) {
   });
 }
 
-// server.js (backend)
-app.get("/api/matches", async (req, res) => {
-  try {
-    const response = await fetch("https://api.football-data.org/v4/matches", {
-      headers: { "X-Auth-Token": "978009eeb2b14289a1f8fb751c79959e" }, // Cheia e gratuită
-    });
-    const data = await response.json();
-    res.json(data.matches);
-  } catch (error) {
-    // Fallback la date mock
-    res.json([
-      {
-        id: 1,
-        homeTeam: { name: "Barcelona" },
-        awayTeam: { name: "Real Madrid" },
-        utcDate: new Date().toISOString(),
-        competition: { name: "La Liga" },
-      },
-    ]);
-  }
-});
+// API MATCHES
+var axios = require("axios");
+
+var config = {
+  method: "get",
+  url: "https://v3.football.api-sports.io",
+  headers: {
+    "x-rapidapi-key": "a53cd76594d35df1c469769d8d576b9a",
+    "x-rapidapi-host": "v3.football.api-sports.io",
+  },
+};
+
+axios(config)
+  .then(function (response) {
+    console.log(JSON.stringify(response.data));
+  })
+  .catch(function (error) {
+    console.log(error);
+  });
 
 // Register a new user
 app.post("/register", async (req, res) => {

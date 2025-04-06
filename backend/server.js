@@ -10,7 +10,7 @@ const moment = require("moment");
 dotenv.config();
 
 const app = express();
-const port = 3004;
+const port = 3008;
 
 // Middleware to parse JSON requests
 app.use(express.json());
@@ -367,6 +367,158 @@ app.get("/users", authenticateJWT, (req, res) => {
     res.json(results);
   });
 });
+
+// Get all projects for current user
+app.get("/projects", authenticateJWT, (req, res) => {
+  const username = req.user.username;
+
+  const query = `
+    SELECT p.id, p.name 
+    FROM projects p
+    JOIN users u ON p.user_id = u.id
+    WHERE u.username = ?
+    ORDER BY p.name ASC
+  `;
+
+  db.query(query, [username], (err, results) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({
+        message: "Error fetching projects",
+        error: err.message,
+      });
+    }
+
+    res.json({ projects: results });
+  });
+});
+
+// Add a new project for current user
+app.post("/projects", authenticateJWT, (req, res) => {
+  console.log("Add project request:", req.body); // Debug
+  const { name } = req.body;
+  const username = req.user.username;
+
+  if (!name) {
+    console.log("Project name missing"); // Debug
+    return res.status(400).json({ message: "Project name is required" });
+  }
+
+  // First get user ID
+  const userQuery = "SELECT id FROM users WHERE username = ?";
+  db.query(userQuery, [username], (err, userResults) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err });
+    }
+
+    if (userResults.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const userId = userResults[0].id;
+
+    // Insert project
+    const insertQuery = "INSERT INTO projects (user_id, name) VALUES (?, ?)";
+    db.query(insertQuery, [userId, name], (err, result) => {
+      if (err) {
+        return res
+          .status(500)
+          .json({ message: "Error adding project", error: err });
+      }
+
+      res.status(201).json({
+        message: "Project added successfully",
+        project: { id: result.insertId, name },
+      });
+    });
+  });
+});
+
+// Update a project
+app.put("/projects/:id", authenticateJWT, (req, res) => {
+  const { id } = req.params;
+  const { name } = req.body;
+  const username = req.user.username;
+
+  if (!name) {
+    return res.status(400).json({ message: "Project name is required" });
+  }
+
+  // Verify project belongs to user and update
+  const query = `
+    UPDATE projects p
+    JOIN users u ON p.user_id = u.id
+    SET p.name = ?
+    WHERE p.id = ? AND u.username = ?
+  `;
+
+  db.query(query, [name, id, username], (err, result) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err });
+    }
+
+    if (result.affectedRows === 0) {
+      return res
+        .status(404)
+        .json({ message: "Project not found or not owned by user" });
+    }
+
+    res.json({ message: "Project updated successfully" });
+  });
+});
+
+// Delete a project
+app.delete("/projects/:id", authenticateJWT, (req, res) => {
+  const { id } = req.params;
+  const username = req.user.username;
+
+  // Verify project belongs to user and delete
+  const query = `
+    DELETE p FROM projects p
+    JOIN users u ON p.user_id = u.id
+    WHERE p.id = ? AND u.username = ?
+  `;
+
+  db.query(query, [id, username], (err, result) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err });
+    }
+
+    if (result.affectedRows === 0) {
+      return res
+        .status(404)
+        .json({ message: "Project not found or not owned by user" });
+    }
+
+    res.json({ message: "Project deleted successfully" });
+  });
+});
+
+// Frontend code to fetch projects
+const fetchProjects = async () => {
+  if (!authToken) return;
+
+  setIsLoading(true);
+  try {
+    const response = await axios.get("http://localhost:3008/projects", {
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    console.log("Projects API response:", response.data); // Debug
+    setProjects(response.data.projects);
+  } catch (error) {
+    console.error(
+      "Error fetching projects:",
+      error.response?.data || error.message
+    );
+    setError("Failed to load projects. Please try again.");
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      setToken("");
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
 
 // Start the server
 app.listen(port, () => {

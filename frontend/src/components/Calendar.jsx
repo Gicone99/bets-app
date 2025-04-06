@@ -60,13 +60,15 @@ const EditBetPopup = ({
         <select
           value={selectedProject ? selectedProject.id : ""}
           onChange={(e) => {
-            const project = projects.find((p) => p.id === e.target.value);
+            const project = projects.find(
+              (p) => p.id.toString() === e.target.value
+            );
             setSelectedProject(project);
-            setTitle(project.name);
+            setTitle(project?.name || "");
           }}
           className="w-full p-3 mb-4 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center"
         >
-          {!selectedProject && <option value="">Select a project</option>}
+          <option value="">Select a project</option>
           {projects.map((project) => (
             <option key={project.id} value={project.id}>
               {project.name}
@@ -680,18 +682,28 @@ const Calendar = () => {
             <select
               value={selectedProject ? selectedProject.id : ""}
               onChange={(e) => {
-                const project = projects.find((p) => p.id === e.target.value);
-                setSelectedProject(project);
-                setNewBetTitle(project.name);
+                const projectId = e.target.value;
+                const project = projects.find(
+                  (p) => p.id.toString() === projectId
+                );
+                console.log(
+                  "Selected project ID:",
+                  projectId,
+                  "Project:",
+                  project
+                ); // Debug
+                setSelectedProject(project || null);
+                setNewBetTitle(project?.name || "");
               }}
               className="w-full p-3 mb-4 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center"
             >
-              {!selectedProject && <option value="">Select a project</option>}
-              {projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.name}
-                </option>
-              ))}
+              <option value="">Select a project</option>
+              {Array.isArray(projects) &&
+                projects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
             </select>
             {selectedProject && (
               <button

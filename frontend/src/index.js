@@ -15,9 +15,12 @@ import History from "./pages/History";
 import Projects from "./pages/Projects";
 import Profile from "./pages/Profile";
 import LiveMatches from "./pages/LiveMatches";
+import Sports from "./pages/Sports";
+
 import { BalanceProvider } from "./context/BalanceContext";
 import { ProjectsProvider } from "./context/ProjectsContext";
 import { UserProvider } from "./context/UserContext";
+import { SportsProvider } from "./context/SportsContext";
 
 const router = createBrowserRouter([
   {
@@ -53,6 +56,10 @@ const router = createBrowserRouter([
         element: <Projects />,
       },
       {
+        path: "/sports",
+        element: <Sports />,
+      },
+      {
         path: "/profile",
         element: <Profile />,
       },
@@ -70,7 +77,9 @@ root.render(
     <UserProvider>
       <BalanceProvider>
         <ProjectsProvider>
-          <RouterProvider router={router} />
+          <SportsProvider>
+            <RouterProvider router={router} />
+          </SportsProvider>
         </ProjectsProvider>
       </BalanceProvider>
     </UserProvider>

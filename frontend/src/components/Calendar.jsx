@@ -224,6 +224,7 @@ const Calendar = () => {
   const handleHomeClick = () => navigate("/");
   const handleHistoryClick = () => navigate("/history");
   const handleProjectsClick = () => navigate("/projects");
+  const handleSportsClick = () => navigate("/sports");
   const handleUserIconClick = () => navigate("/profile");
   const handleMatchesClick = () => navigate("/livematches");
 
@@ -583,14 +584,18 @@ const Calendar = () => {
           >
             <FaHistory className="mr-2" /> History
           </button>
-
           <button
             onClick={handleProjectsClick}
             className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
           >
             <FaRProject className="mr-2" /> Projects
           </button>
-
+          <button
+            onClick={handleSportsClick}
+            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+          >
+            <FaFutbol className="mr-2" /> Sports
+          </button>
           <button
             onClick={handleMatchesClick}
             className="flex items-center text-green-400 hover:text-green-500 transition duration-200"

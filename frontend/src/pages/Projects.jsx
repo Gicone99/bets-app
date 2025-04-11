@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { FaEdit, FaTrash } from "react-icons/fa";
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
@@ -171,9 +172,7 @@ const Projects = () => {
   if (!token) {
     return (
       <div className="max-w-4xl mx-auto bg-gradient-to-b from-black via-gray-900 to-gray-900 shadow-xl rounded-2xl p-8 text-center">
-        <h1 className="text-3xl font-semibold mb-6 text-green-400">
-          My Projects
-        </h1>
+        <h1 className="text-3xl font-semibold mb-6 text-green-400">Projects</h1>
         <p className="text-white mb-4">
           You need to be logged in to view projects
         </p>
@@ -190,7 +189,7 @@ const Projects = () => {
   return (
     <div className="max-w-4xl mx-auto bg-gradient-to-b from-black via-gray-900 to-gray-900 shadow-xl rounded-2xl p-8">
       <h1 className="text-3xl font-semibold text-center mb-6 text-green-400">
-        My Projects
+        Projects
       </h1>
 
       {/* Error Message */}
@@ -227,71 +226,75 @@ const Projects = () => {
         </button>
       </div>
 
-      {/* Projects List */}
-      <div className="mt-4">
+      {/* Projects Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {projects.length === 0 && !isLoading ? (
-          <p className="text-center text-gray-400">
+          <div className="col-span-3 text-center text-gray-400 py-8">
             No projects yet. Add your first project!
-          </p>
+          </div>
         ) : (
           projects.map((project) => (
             <div
               key={project.id}
-              className="p-6 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-800 text-white rounded-lg shadow-xl mb-4 flex justify-between items-center"
+              className={`p-4 rounded-lg border-2 ${
+                editingProjectId === project.id
+                  ? "border-green-500 bg-green-500/10"
+                  : "border-gray-600 bg-gray-700/50"
+              } transition-all hover:shadow-lg`}
             >
               {editingProjectId === project.id ? (
-                <div className="flex-grow mr-4">
+                <div className="space-y-3">
                   <input
                     type="text"
                     value={editingProjectName}
                     onChange={(e) => setEditingProjectName(e.target.value)}
                     onKeyPress={(e) => e.key === "Enter" && saveEditing()}
-                    className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white"
+                    className="w-full p-2 border-2 border-green-400 rounded-lg bg-gray-800 text-white"
                     disabled={isLoading}
                     autoFocus
                   />
-                </div>
-              ) : (
-                <span className="text-xl font-bold flex-grow">
-                  {project.name}
-                </span>
-              )}
-
-              <div className="flex space-x-4">
-                {editingProjectId === project.id ? (
-                  <>
+                  <div className="flex justify-end space-x-2">
                     <button
                       onClick={saveEditing}
                       disabled={isLoading}
-                      className="text-green-600 hover:text-green-800 disabled:opacity-50"
+                      className="px-2 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-sm disabled:opacity-50"
                     >
                       Save
                     </button>
                     <button
                       onClick={cancelEditing}
                       disabled={isLoading}
-                      className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                      className="px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm disabled:opacity-50"
                     >
                       Cancel
                     </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => startEditing(project)}
-                    disabled={isLoading}
-                    className="text-blue-600 hover:text-blue-800 disabled:opacity-50"
-                  >
-                    Edit
-                  </button>
-                )}
-                <button
-                  onClick={() => deleteProject(project.id)}
-                  disabled={isLoading}
-                  className="text-red-600 hover:text-red-800 disabled:opacity-50"
-                >
-                  Delete
-                </button>
-              </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium text-white capitalize">
+                    {project.name}
+                  </h3>
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={() => startEditing(project)}
+                      disabled={isLoading}
+                      className="text-blue-500 hover:text-blue-700 disabled:opacity-50"
+                      title="Edit"
+                    >
+                      <FaEdit />
+                    </button>
+                    <button
+                      onClick={() => deleteProject(project.id)}
+                      disabled={isLoading}
+                      className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                      title="Delete"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ))
         )}

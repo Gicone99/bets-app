@@ -13,6 +13,64 @@ import { BalanceContext } from "../context/BalanceContext";
 import { ProjectsContext } from "../context/ProjectsContext";
 import { UserContext } from "../context/UserContext";
 import { SportsContext } from "../context/SportsContext";
+import { FaBasketballBall } from "react-icons/fa";
+import {
+  MdOutlineSportsHandball,
+  MdOutlineSportsRugby,
+  MdOutlineSportsMartialArts,
+  MdSportsTennis,
+  MdSportsMotorsports,
+  MdSportsGymnastics,
+} from "react-icons/md";
+import {
+  GiHockey,
+  GiVolleyballBall,
+  GiBaseballBat,
+  GiAmericanFootballBall,
+  GiCricketBat,
+  GiBoxingGlove,
+  GiPingPongBat,
+  GiTennisRacket,
+  GiPoolTriangle,
+  GiDart,
+  GiGamepad,
+  GiCycling,
+  GiGolfFlag,
+} from "react-icons/gi";
+
+const sportIcons = {
+  Football: <FaFutbol className="text-2xl mx-auto text-green-400" />,
+  Basketball: <FaBasketballBall className="text-2xl mx-auto text-green-400" />,
+  Tennis: <MdSportsTennis className="text-2xl mx-auto text-green-400" />,
+  Hockey: <GiHockey className="text-2xl mx-auto text-green-400" />,
+  Handball: (
+    <MdOutlineSportsHandball className="text-2xl mx-auto text-green-400" />
+  ),
+  Volleyball: <GiVolleyballBall className="text-2xl mx-auto text-green-400" />,
+  Baseball: <GiBaseballBat className="text-2xl mx-auto text-green-400" />,
+  "American Football": (
+    <GiAmericanFootballBall className="text-2xl mx-auto text-green-400" />
+  ),
+  Cricket: <GiCricketBat className="text-2xl mx-auto text-green-400" />,
+  Motorsport: (
+    <MdSportsMotorsports className="text-2xl mx-auto text-green-400" />
+  ),
+  Rugby: <MdOutlineSportsRugby className="text-2xl mx-auto text-green-400" />,
+  "Other Sports": (
+    <MdSportsGymnastics className="text-2xl mx-auto text-green-400" />
+  ),
+  Boxing: <GiBoxingGlove className="text-2xl mx-auto text-green-400" />,
+  MMA: (
+    <MdOutlineSportsMartialArts className="text-2xl mx-auto text-green-400" />
+  ),
+  "Table Tennis": <GiPingPongBat className="text-2xl mx-auto text-green-400" />,
+  Badminton: <GiTennisRacket className="text-2xl mx-auto text-green-400" />,
+  Snooker: <GiPoolTriangle className="text-2xl mx-auto text-green-400" />,
+  Darts: <GiDart className="text-2xl mx-auto text-green-400" />,
+  Esports: <GiGamepad className="text-2xl mx-auto text-green-400" />,
+  Cycling: <GiCycling className="text-2xl mx-auto text-green-400" />,
+  Golf: <GiGolfFlag className="text-2xl mx-auto text-green-400" />,
+};
 
 const EditBetPopup = ({
   onClose,
@@ -110,10 +168,11 @@ const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
   const [status, setStatus] = useState(existingMarket?.status || "PENDING");
   const [odds, setOdds] = useState(existingMarket?.odds || "");
   const [selectedSport, setSelectedSport] = useState(
-    existingMarket?.sport || ""
+    existingMarket?.sport || "Football" // Default to Football
   );
   const { selectedSports } = useContext(SportsContext);
 
+  // Get available sports based on user's selection
   const availableSports = [
     { id: 1, name: "Football" },
     { id: 2, name: "Basketball" },
@@ -126,7 +185,7 @@ const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
     { id: 9, name: "Cricket" },
     { id: 10, name: "Motorsport" },
     { id: 11, name: "Rugby" },
-    { id: 11, name: "Other Sports" },
+    { id: 12, name: "Other Sports" },
     { id: 13, name: "Boxing" },
     { id: 14, name: "MMA" },
     { id: 15, name: "Table Tennis" },
@@ -138,8 +197,18 @@ const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
     { id: 21, name: "Golf" },
   ].filter((sport) => selectedSports.includes(sport.id));
 
+  // Set Football as default if available
+  useEffect(() => {
+    if (
+      availableSports.some((sport) => sport.name === "Football") &&
+      !selectedSport
+    ) {
+      setSelectedSport("Football");
+    }
+  }, [availableSports, selectedSport]);
+
   const handleSubmit = () => {
-    if (!bettingMarket.trim() || !odds.trim() || !selectedSport) {
+    if (!bettingMarket.trim() || !odds.trim()) {
       alert("Please fill all fields");
       return;
     }
@@ -170,18 +239,25 @@ const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
           <label className="block text-xl font-bold text-green-400 mb-2">
             Sport
           </label>
-          <select
-            value={selectedSport}
-            onChange={(e) => setSelectedSport(e.target.value)}
-            className="w-full p-3 border-2 border-green-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-800 text-white"
-          >
-            <option value="">Select a sport</option>
+          <div className="flex flex-wrap gap-2 justify-center">
             {availableSports.map((sport) => (
-              <option key={sport.id} value={sport.name}>
-                {sport.name}
-              </option>
+              <div
+                key={sport.id}
+                onClick={() => setSelectedSport(sport.name)}
+                className={`p-3 rounded-lg border-2 cursor-pointer ${
+                  selectedSport === sport.name
+                    ? "border-green-500 bg-green-500/10"
+                    : "border-gray-600 bg-gray-700/50"
+                }`}
+                title={sport.name}
+              >
+                {sportIcons[sport.name] || sport.name}
+              </div>
             ))}
-          </select>
+          </div>
+          {selectedSport && (
+            <p className="text-green-400 mt-2">Selected: {selectedSport}</p>
+          )}
         </div>
 
         <div className="mb-6">
@@ -624,9 +700,7 @@ const Calendar = () => {
           </button>
         </div>
         <span className="text-right text-green-400">
-          {(() => {
-            return `Balance: ${Number(user?.balance || 0).toFixed(2)}`;
-          })()}
+          {`Balance: ${Number(user?.balance || 0).toFixed(2)}`}
         </span>
         <span className="text-green-400">User: {user.username}</span>
       </div>
@@ -821,11 +895,24 @@ const Calendar = () => {
                               </p>
                             </div>
 
+                            {/* Înlocuim secțiunea pentru sport */}
                             <div className="flex-1 text-center">
-                              <label className="block font-semibold text-gray-500">
-                                Sport
-                              </label>
-                              <p className="text-gray-300">{market.sport}</p>
+                              {React.cloneElement(
+                                sportIcons[market.sport] || (
+                                  <p className="text-gray-300">
+                                    {market.sport}
+                                  </p>
+                                ),
+                                {
+                                  className: `text-2xl mx-auto ${
+                                    market.status === "LOST"
+                                      ? "text-red-500"
+                                      : market.status === "WON"
+                                      ? "text-green-500"
+                                      : "text-gray-300"
+                                  }`,
+                                }
+                              )}
                             </div>
 
                             <div

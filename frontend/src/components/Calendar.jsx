@@ -7,6 +7,8 @@ import {
   FaHistory,
   FaRProject,
   FaFutbol,
+  FaBars,
+  FaTimes,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { BalanceContext } from "../context/BalanceContext";
@@ -114,8 +116,10 @@ const EditBetPopup = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50 text-center">
-      <div className="bg-gradient-to-b from-gray-900 via-black to-gray-900 rounded-lg shadow-2xl p-6 w-96">
-        <h2 className="text-2xl font-bold text-green-400 mb-4">Bet Title</h2>
+      <div className="bg-gradient-to-b from-gray-900 via-black to-gray-900 rounded-lg shadow-2xl p-6 w-[90%] max-w-md">
+        <h2 className="text-xl sm:text-2xl font-bold text-green-400 mb-4">
+          Bet Title
+        </h2>
         <select
           value={selectedProject ? selectedProject.id : ""}
           onChange={(e) => {
@@ -125,7 +129,7 @@ const EditBetPopup = ({
             setSelectedProject(project);
             setTitle(project?.name || "");
           }}
-          className="w-full p-3 mb-4 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center"
+          className="w-full p-3 mb-4 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center text-sm sm:text-base"
         >
           <option value="">Select a project</option>
           {projects.map((project) => (
@@ -134,24 +138,26 @@ const EditBetPopup = ({
             </option>
           ))}
         </select>
-        <h2 className="text-2xl font-bold text-green-400 mb-4">Stake</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-green-400 mb-4">
+          Stake
+        </h2>
         <input
           type="text"
           value={stake}
           onChange={handleStakeChange}
           placeholder="Enter stake"
-          className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-500 mb-6 text-center"
+          className="w-full p-3 border-2 border-green-400 rounded-lg bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-green-500 mb-6 text-center text-sm sm:text-base"
         />
         <div className="flex justify-between gap-8">
           <button
             onClick={handleSubmit}
-            className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-300 ease-in-out transform hover:scale-105 shadow-md w-1/2"
+            className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-300 ease-in-out transform hover:scale-105 shadow-md w-1/2 text-sm sm:text-base"
           >
             Submit
           </button>
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition duration-300 ease-in-out transform hover:scale-105 shadow-md w-1/2"
+            className="px-5 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition duration-300 ease-in-out transform hover:scale-105 shadow-md w-1/2 text-sm sm:text-base"
           >
             Close
           </button>
@@ -168,11 +174,10 @@ const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
   const [status, setStatus] = useState(existingMarket?.status || "PENDING");
   const [odds, setOdds] = useState(existingMarket?.odds || "");
   const [selectedSport, setSelectedSport] = useState(
-    existingMarket?.sport || "Football" // Default to Football
+    existingMarket?.sport || "Football"
   );
   const { selectedSports } = useContext(SportsContext);
 
-  // Get available sports based on user's selection
   const availableSports = [
     { id: 1, name: "Football" },
     { id: 2, name: "Basketball" },
@@ -197,7 +202,6 @@ const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
     { id: 21, name: "Golf" },
   ].filter((sport) => selectedSports.includes(sport.id));
 
-  // Set Football as default if available
   useEffect(() => {
     if (
       availableSports.some((sport) => sport.name === "Football") &&
@@ -234,7 +238,7 @@ const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50 text-center">
-      <div className="bg-gradient-to-b from-gray-900 via-black to-gray-900 rounded-lg shadow-2xl p-6 w-96">
+      <div className="bg-gradient-to-b from-gray-900 via-black to-gray-900 rounded-lg shadow-2xl p-6 w-[90%] max-w-md">
         <div className="mb-6">
           <label className="block text-xl font-bold text-green-400 mb-2">
             Sport
@@ -269,26 +273,26 @@ const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
             placeholder="Enter market name"
             value={bettingMarket}
             onChange={handlebettingMarketChange}
-            className="place-items-center w-full p-3 border-2 border-green-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-800 text-white"
+            className="place-items-center w-full p-3 border-2 border-green-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-800 text-white text-sm sm:text-base"
           />
         </div>
 
-        <div className="flex justify-between mb-6">
-          <div className="w-48">
+        <div className="flex flex-col sm:flex-row justify-between mb-6">
+          <div className="w-full sm:w-48 mb-4 sm:mb-0">
             <label className="block text-xl font-bold text-green-400 mb-2">
               Status
             </label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="place-items-center w-full p-3 border-2 border-green-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-800 text-white"
+              className="place-items-center w-full p-3 border-2 border-green-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-800 text-white text-sm sm:text-base"
             >
               <option value="PENDING">PENDING</option>
               <option value="WON">WON</option>
               <option value="LOST">LOST</option>
             </select>
           </div>
-          <div className="w-24 ml-6">
+          <div className="w-full sm:w-24">
             <label className="block text-xl font-bold text-green-400 mb-2">
               Odds
             </label>
@@ -297,7 +301,7 @@ const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
               placeholder="Enter odds"
               value={odds}
               onChange={handleOddsChange}
-              className="place-items-center w-full p-3 border-2 border-green-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-800 text-white"
+              className="place-items-center w-full p-3 border-2 border-green-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-800 text-white text-sm sm:text-base"
             />
           </div>
         </div>
@@ -305,13 +309,13 @@ const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
         <div className="flex justify-between gap-8 mt-10">
           <button
             onClick={handleSubmit}
-            className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-300 ease-in-out transform hover:scale-105 shadow-md w-1/2"
+            className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-300 ease-in-out transform hover:scale-105 shadow-md w-1/2 text-sm sm:text-base"
           >
             Submit
           </button>
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition duration-300 ease-in-out transform hover:scale-105 shadow-md w-1/2"
+            className="px-5 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition duration-300 ease-in-out transform hover:scale-105 shadow-md w-1/2 text-sm sm:text-base"
           >
             Close
           </button>
@@ -331,6 +335,7 @@ const Calendar = () => {
   const [popupMarketId, setPopupMarketId] = useState(null);
   const [showEditPopup, setShowEditPopup] = useState(false);
   const [editBetId, setEditBetId] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { balance, setBalance } = useContext(BalanceContext);
   const { user, setUser } = useContext(UserContext);
   const { projects, setProjects } = useContext(ProjectsContext);
@@ -338,12 +343,30 @@ const Calendar = () => {
   const [selectedProject, setSelectedProject] = useState(null);
 
   const navigate = useNavigate();
-  const handleHomeClick = () => navigate("/");
-  const handleHistoryClick = () => navigate("/history");
-  const handleProjectsClick = () => navigate("/projects");
-  const handleSportsClick = () => navigate("/sports");
-  const handleUserIconClick = () => navigate("/profile");
-  const handleMatchesClick = () => navigate("/livematches");
+  const handleHomeClick = () => {
+    navigate("/");
+    setIsMenuOpen(false);
+  };
+  const handleHistoryClick = () => {
+    navigate("/history");
+    setIsMenuOpen(false);
+  };
+  const handleProjectsClick = () => {
+    navigate("/projects");
+    setIsMenuOpen(false);
+  };
+  const handleSportsClick = () => {
+    navigate("/sports");
+    setIsMenuOpen(false);
+  };
+  const handleUserIconClick = () => {
+    navigate("/profile");
+    setIsMenuOpen(false);
+  };
+  const handleMatchesClick = () => {
+    navigate("/livematches");
+    setIsMenuOpen(false);
+  };
 
   useEffect(() => {
     const storedBets = JSON.parse(localStorage.getItem("betsByDate"));
@@ -658,83 +681,149 @@ const Calendar = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-gradient-to-b from-black via-gray-900 to-gray-900 shadow-xl rounded-2xl p-8">
-      <div className="flex justify-between items-center mb-6">
+    <div className="max-w-4xl mx-auto bg-gradient-to-b from-black via-gray-900 to-gray-900 shadow-xl rounded-2xl p-4 sm:p-6 md:p-8">
+      {/* Mobile Menu Button */}
+      <div className="md:hidden flex justify-between items-center mb-4">
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="text-green-400 hover:text-green-500"
+        >
+          {isMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
+        </button>
+        <div className="flex items-center space-x-4">
+          <span className="text-green-400 text-sm">
+            {`$${Number(user?.balance || 0).toFixed(2)}`}
+          </span>
+          <span className="text-green-400 text-sm">{user.username}</span>
+        </div>
+      </div>
+
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <div className="md:hidden bg-gray-800 rounded-lg p-4 mb-4">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={handleHomeClick}
+              className="flex items-center justify-center text-green-400 hover:text-green-500 py-2"
+            >
+              <FaHome className="mr-2" /> Home
+            </button>
+            <button
+              onClick={handleHistoryClick}
+              className="flex items-center justify-center text-green-400 hover:text-green-500 py-2"
+            >
+              <FaHistory className="mr-2" /> History
+            </button>
+            <button
+              onClick={handleProjectsClick}
+              className="flex items-center justify-center text-green-400 hover:text-green-500 py-2"
+            >
+              <FaRProject className="mr-2" /> Projects
+            </button>
+            <button
+              onClick={handleSportsClick}
+              className="flex items-center justify-center text-green-400 hover:text-green-500 py-2"
+            >
+              <FaFutbol className="mr-2" /> Sports
+            </button>
+            <button
+              onClick={handleMatchesClick}
+              className="flex items-center justify-center text-green-400 hover:text-green-500 py-2"
+            >
+              <FaFutbol className="mr-2" /> Live
+            </button>
+            <button
+              onClick={handleUserIconClick}
+              className="flex items-center justify-center text-green-400 hover:text-green-500 py-2"
+            >
+              <FaUser className="mr-2" /> Profile
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Navigation */}
+      <div className="hidden md:flex justify-between items-center mb-6">
         <div className="flex space-x-4">
           <button
             onClick={handleHomeClick}
-            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+            className="flex items-center text-green-400 hover:text-green-500"
           >
             <FaHome className="mr-2" /> Home
           </button>
           <button
             onClick={handleHistoryClick}
-            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+            className="flex items-center text-green-400 hover:text-green-500"
           >
             <FaHistory className="mr-2" /> History
           </button>
           <button
             onClick={handleProjectsClick}
-            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+            className="flex items-center text-green-400 hover:text-green-500"
           >
             <FaRProject className="mr-2" /> Projects
           </button>
           <button
             onClick={handleSportsClick}
-            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+            className="flex items-center text-green-400 hover:text-green-500"
           >
             <FaFutbol className="mr-2" /> Sports
           </button>
           <button
             onClick={handleMatchesClick}
-            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+            className="flex items-center text-green-400 hover:text-green-500"
           >
-            <FaFutbol className="mr-2" /> Live Matches
+            <FaFutbol className="mr-2" /> Live
           </button>
-
           <button
             onClick={handleUserIconClick}
-            className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
+            className="flex items-center text-green-400 hover:text-green-500"
           >
             <FaUser className="mr-2" /> Profile
           </button>
         </div>
-        <span className="text-right text-green-400">
-          {`Balance: ${Number(user?.balance || 0).toFixed(2)}`}
-        </span>
-        <span className="text-green-400">User: {user.username}</span>
+        <div className="flex items-center space-x-4">
+          <span className="text-green-400">
+            {`Balance: ${Number(user?.balance || 0).toFixed(2)}`}
+          </span>
+          <span className="text-green-400">User: {user.username}</span>
+        </div>
       </div>
-      <h1 className="text-3xl font-semibold text-center mb-6 text-green-400">
+
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold text-center mb-4 sm:mb-6 text-green-400">
         Betting Calendar
       </h1>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-4 sm:mb-6">
         <button
-          className="text-2xl text-green-400 hover:text-blue-500 transition duration-200"
+          className="text-xl sm:text-2xl text-green-400 hover:text-blue-500 transition duration-200"
           onClick={goToPreviousMonth}
         >
           ←
         </button>
-        <span className="text-xl font-medium text-green-400">
+        <span className="text-lg sm:text-xl md:text-2xl font-medium text-green-400">
           {currentDate.toLocaleString("en-US", {
             month: "long",
             year: "numeric",
           })}
         </span>
         <button
-          className="text-2xl text-green-400 hover:text-blue-500 transition duration-200"
+          className="text-xl sm:text-2xl text-green-400 hover:text-blue-500 transition duration-200"
           onClick={goToNextMonth}
         >
           →
         </button>
       </div>
-      <div className="grid grid-cols-7 gap-2 mb-4">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 sm:mb-4">
         {weekDays.map((day) => (
-          <div key={day} className="text-center font-medium text-green-400">
+          <div
+            key={day}
+            className="text-center font-medium text-green-400 text-xs sm:text-sm"
+          >
             {day}
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 gap-2 mb-4">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-4">
         {generateDays().map((date, index) => {
           const profitLoss = date ? calculateDailyProfitLoss(date) : 0;
           const bgColor =
@@ -748,7 +837,7 @@ const Calendar = () => {
             <div
               key={index}
               onClick={() => date && setSelectedDate(date)}
-              className={`cursor-pointer p-2 rounded-lg text-center ${
+              className={`cursor-pointer p-1 sm:p-2 rounded-lg text-center text-xs sm:text-sm ${
                 date ? bgColor : "bg-transparent"
               } ${
                 date && selectedDate === date ? "ring-2 ring-green-400" : ""
@@ -756,7 +845,7 @@ const Calendar = () => {
             >
               {date ? date.split("-")[2] : ""}
               {date && betsByDate[date]?.length > 0 && (
-                <div className="mt-2 text-xs text-gray-500">
+                <div className="mt-1 text-xxs sm:text-xs text-gray-500">
                   {betsByDate[date].length} Bets
                 </div>
               )}
@@ -765,11 +854,11 @@ const Calendar = () => {
         })}
       </div>
       {selectedDate && (
-        <div className="mt-10">
-          <h2 className="text-xl font-medium text-green-400 mb-4 text-center">
+        <div className="mt-6 sm:mt-10">
+          <h2 className="text-lg sm:text-xl md:text-2xl font-medium text-green-400 mb-4 text-center">
             Betting Markets for {selectedDate}
           </h2>
-          <div className="flex justify-between gap-8">
+          <div className="flex flex-col sm:flex-row justify-between gap-3 sm:gap-8 mb-4">
             <select
               value={selectedProject ? selectedProject.id : ""}
               onChange={(e) => {
@@ -780,7 +869,7 @@ const Calendar = () => {
                 setSelectedProject(project || null);
                 setNewBetTitle(project?.name || "");
               }}
-              className="w-full p-3 mb-4 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center"
+              className="w-full p-2 sm:p-3 mb-2 sm:mb-4 border-2 border-green-400 rounded-lg bg-gray-800 text-white text-center text-sm sm:text-base"
             >
               <option value="">Select a project</option>
               {Array.isArray(projects) &&
@@ -796,34 +885,34 @@ const Calendar = () => {
                   setSelectedProject(null);
                   setNewBetTitle("");
                 }}
-                className="bg-red-600 hover:bg-red-700 text-white px-6 rounded-lg focus:outline-none mb-4 whitespace-nowrap"
+                className="bg-red-600 hover:bg-red-700 text-white px-3 sm:px-6 py-1.5 sm:py-2 rounded-lg focus:outline-none mb-2 sm:mb-4 whitespace-nowrap text-sm sm:text-base"
               >
                 Clear Selection
               </button>
             )}
             <button
               onClick={addBet}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 rounded-lg focus:outline-none mb-4 whitespace-nowrap"
+              className="bg-green-600 hover:bg-green-700 text-white px-3 sm:px-6 py-1.5 sm:py-2 rounded-lg focus:outline-none mb-2 sm:mb-4 whitespace-nowrap text-sm sm:text-base"
             >
               Add Bet
             </button>
           </div>
-          <div className="mt-4">
+          <div className="mt-4 sm:mt-6">
             {betsByDate[selectedDate]?.map((bet) => {
               const { updatedStatus, totalOdds, winnings } = bet;
 
               return (
                 <div
                   key={bet.id}
-                  className="p-6 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-800 text-white rounded-lg shadow-xl mb-4 flex flex-col"
+                  className="p-4 sm:p-6 bg-gradient-to-b from-gray-800 via-gray-700 to-gray-800 text-white rounded-lg shadow-xl mb-4"
                 >
                   <div className="flex justify-between items-center mb-4">
                     <div className="text-left">
-                      <p className="text-sm font-semibold text-gray-500">
+                      <p className="text-xs sm:text-sm font-semibold text-gray-500">
                         Stake
                       </p>
                       <p
-                        className={`text-sm ${
+                        className={`text-xs sm:text-sm ${
                           updatedStatus === "LOST"
                             ? "text-red-500"
                             : updatedStatus === "WON"
@@ -836,7 +925,7 @@ const Calendar = () => {
                     </div>
 
                     <h3
-                      className={`text-xl font-bold text-center flex-1 ${
+                      className={`text-base sm:text-xl font-bold text-center flex-1 ${
                         updatedStatus === "LOST"
                           ? "text-red-500"
                           : updatedStatus === "WON"
@@ -847,7 +936,7 @@ const Calendar = () => {
                       {bet.title}
                     </h3>
 
-                    <div className="flex space-x-4">
+                    <div className="flex space-x-2 sm:space-x-4">
                       <div>
                         {!bet.isReady && (
                           <button
@@ -855,7 +944,7 @@ const Calendar = () => {
                               setEditBetId(bet.id);
                               setShowEditPopup(true);
                             }}
-                            className="text-blue-600 hover:text-blue-800"
+                            className="text-blue-600 hover:text-blue-800 text-sm sm:text-base"
                           >
                             <FaEdit />
                           </button>
@@ -863,7 +952,7 @@ const Calendar = () => {
                       </div>
                       <button
                         onClick={() => deleteBet(bet.id)}
-                        className="text-red-600 hover:text-red-800"
+                        className="text-red-600 hover:text-red-800 text-sm sm:text-base"
                       >
                         <FaTrash />
                       </button>
@@ -871,19 +960,19 @@ const Calendar = () => {
                   </div>
 
                   {bet.bettingMarkets.length > 0 && (
-                    <div className="mt-4 space-y-3">
+                    <div className="mt-4 sm:mt-6 space-y-3">
                       {bet.bettingMarkets.map((market) => (
                         <div
                           key={market.id}
-                          className="p-4 bg-gradient-to-b from-gray-700 via-gray-600 to-gray-700 text-white rounded-lg shadow-md mb-4"
+                          className="p-3 sm:p-4 bg-gradient-to-b from-gray-700 via-gray-600 to-gray-700 text-white rounded-lg shadow-md mb-3 sm:mb-4"
                         >
                           <div className="flex justify-between items-center mb-2">
                             <div className="flex-1 text-left">
-                              <label className="block font-semibold text-gray-500">
+                              <label className="block text-xs sm:text-sm font-semibold text-gray-500">
                                 Status
                               </label>
                               <p
-                                className={`${
+                                className={`text-xs sm:text-sm ${
                                   market.status === "LOST"
                                     ? "text-red-500"
                                     : market.status === "WON"
@@ -895,16 +984,15 @@ const Calendar = () => {
                               </p>
                             </div>
 
-                            {/* Înlocuim secțiunea pentru sport */}
                             <div className="flex-1 text-center">
                               {React.cloneElement(
                                 sportIcons[market.sport] || (
-                                  <p className="text-gray-300">
+                                  <p className="text-gray-300 text-xs sm:text-sm">
                                     {market.sport}
                                   </p>
                                 ),
                                 {
-                                  className: `text-2xl mx-auto ${
+                                  className: `text-lg sm:text-2xl mx-auto ${
                                     market.status === "LOST"
                                       ? "text-red-500"
                                       : market.status === "WON"
@@ -916,7 +1004,7 @@ const Calendar = () => {
                             </div>
 
                             <div
-                              className={`flex-1 text-sm text-center ${
+                              className={`flex-1 text-center ${
                                 market.status === "LOST"
                                   ? "text-red-500"
                                   : market.status === "WON"
@@ -924,15 +1012,17 @@ const Calendar = () => {
                                   : "text-gray-300"
                               }`}
                             >
-                              <p>{market.title}</p>
+                              <p className="text-xs sm:text-sm">
+                                {market.title}
+                              </p>
                             </div>
 
-                            <div className="flex-1 text-right mr-6">
-                              <label className="block font-semibold text-gray-500">
+                            <div className="flex-1 text-right mr-2 sm:mr-6">
+                              <label className="block text-xs sm:text-sm font-semibold text-gray-500">
                                 Odds
                               </label>
                               <p
-                                className={`mr-2 ${
+                                className={`text-xs sm:text-sm ${
                                   market.status === "LOST"
                                     ? "text-red-500"
                                     : market.status === "WON"
@@ -944,14 +1034,14 @@ const Calendar = () => {
                               </p>
                             </div>
 
-                            <div className="flex space-x-4 ml-4">
+                            <div className="flex space-x-2 sm:space-x-4 ml-2 sm:ml-4">
                               {!bet.isReady && (
                                 <>
                                   <button
                                     onClick={() =>
                                       editBettingMarket(bet.id, market.id)
                                     }
-                                    className="text-blue-600 hover:text-blue-800"
+                                    className="text-blue-600 hover:text-blue-800 text-sm sm:text-base"
                                   >
                                     <FaEdit />
                                   </button>
@@ -959,7 +1049,7 @@ const Calendar = () => {
                                     onClick={() =>
                                       deleteBettingMarket(bet.id, market.id)
                                     }
-                                    className="text-red-600 hover:text-red-800"
+                                    className="text-red-600 hover:text-red-800 text-sm sm:text-base"
                                   >
                                     <FaTrash />
                                   </button>
@@ -972,85 +1062,79 @@ const Calendar = () => {
                     </div>
                   )}
 
-                  <div className="mt-6 border-t border-gray-600 pt-4"></div>
-                  <div className="flex justify-between items-center mt-4 space-x-4">
-                    <div className="flex text-left justify-between gap-16">
-                      {bet.isReady ? (
-                        <button
-                          className="bg-gray-600 text-white py-2 px-4 rounded-lg focus:outline-none"
-                          disabled
-                        >
-                          Done
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleReadyClick(bet.id)}
-                          className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg focus:outline-none"
-                        >
-                          Close Bet
-                        </button>
-                      )}
-
-                      {!bet.isReady && (
-                        <button
-                          onClick={() => editBettingMarket(bet.id, null)}
-                          className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg focus:outline-none"
-                        >
-                          Add Betting Market
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="flex justify-between gap-12">
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-gray-500">
-                          Status
-                        </p>
-                        <p
-                          className={`text-sm ${
-                            updatedStatus === "LOST"
-                              ? "text-red-500"
-                              : updatedStatus === "WON"
-                              ? "text-green-500"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          {updatedStatus}
-                        </p>
+                  <div className="mt-4 sm:mt-6 border-t border-gray-600 pt-3 sm:pt-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-4 mt-3">
+                      {/* Butoane pe prima linie */}
+                      <div className="flex gap-2 w-full sm:w-auto">
+                        {bet.isReady ? (
+                          <button
+                            className="bg-gray-600 text-white py-1 px-3 rounded-lg text-sm w-full sm:w-auto"
+                            disabled
+                          >
+                            Done
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleReadyClick(bet.id)}
+                              className="bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded-lg text-sm w-full sm:w-auto"
+                            >
+                              Close Bet
+                            </button>
+                            <button
+                              onClick={() => editBettingMarket(bet.id, null)}
+                              className="bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded-lg text-sm w-full sm:w-auto"
+                            >
+                              Add Market
+                            </button>
+                          </>
+                        )}
                       </div>
 
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-gray-500">
-                          Total Odds
-                        </p>
-                        <p
-                          className={`text-sm ${
-                            updatedStatus === "LOST"
-                              ? "text-red-500"
-                              : updatedStatus === "WON"
-                              ? "text-green-500"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          {totalOdds.toFixed(2)}
-                        </p>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-gray-500">
-                          Winnings
-                        </p>
-                        <p
-                          className={`text-sm ${
-                            updatedStatus === "LOST"
-                              ? "text-red-500"
-                              : updatedStatus === "WON"
-                              ? "text-green-500"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          {winnings.toFixed(2)}
-                        </p>
+                      {/* Detalii pe a doua linie */}
+                      <div className="grid grid-cols-3 sm:flex gap-2 sm:gap-6 w-full sm:w-auto">
+                        <div>
+                          <p className="text-xs text-gray-400">Status</p>
+                          <p
+                            className={`text-sm ${
+                              updatedStatus === "LOST"
+                                ? "text-red-500"
+                                : updatedStatus === "WON"
+                                ? "text-green-500"
+                                : "text-gray-300"
+                            }`}
+                          >
+                            {updatedStatus}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400">Odds</p>
+                          <p
+                            className={`text-sm ${
+                              updatedStatus === "LOST"
+                                ? "text-red-500"
+                                : updatedStatus === "WON"
+                                ? "text-green-500"
+                                : "text-gray-300"
+                            }`}
+                          >
+                            {totalOdds.toFixed(2)}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-400">Winnings</p>
+                          <p
+                            className={`text-sm ${
+                              updatedStatus === "LOST"
+                                ? "text-red-500"
+                                : updatedStatus === "WON"
+                                ? "text-green-500"
+                                : "text-gray-300"
+                            }`}
+                          >
+                            {winnings.toFixed(2)}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1091,11 +1175,11 @@ const Calendar = () => {
       )}
       {calculateDailyProfitLoss(selectedDate) !== 0 && (
         <div
-          className={`text-xl font-medium mb-6 text-right ${getProfitLossColor(
+          className={`text-sm sm:text-base md:text-xl font-medium mb-4 sm:mb-6 text-right ${getProfitLossColor(
             calculateDailyProfitLoss(selectedDate)
           )}`}
         >
-          <hr></hr>
+          <hr className="my-2 sm:my-3 border-gray-600"></hr>
           <br></br>
           {getProfitLossLabel(calculateDailyProfitLoss(selectedDate))}:{" "}
           {calculateDailyProfitLoss(selectedDate).toFixed(2)}

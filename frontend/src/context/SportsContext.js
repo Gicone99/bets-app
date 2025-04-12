@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext } from "react";
+import React, { createContext, useState, useContext, useEffect } from "react";
 import axios from "axios";
 import { UserContext } from "./UserContext";
 
@@ -10,10 +10,19 @@ export const SportsProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const { user } = useContext(UserContext);
 
-  // Funcție pentru încărcarea sporturilor selectate
+  // Load selected sports when user changes
+  useEffect(() => {
+    if (user) {
+      loadSelectedSports();
+    } else {
+      setSelectedSports([]);
+    }
+  }, [user]);
+
   const loadSelectedSports = async () => {
     try {
       setIsLoading(true);
+      setError(null);
       const token = localStorage.getItem("token");
       if (!token || !user) return;
 
@@ -23,26 +32,32 @@ export const SportsProvider = ({ children }) => {
 
       setSelectedSports(response.data.selectedSports || []);
     } catch (err) {
-      setError(err.message);
+      console.error("Error loading sports:", err);
+      setError(err.response?.data?.message || err.message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Funcție pentru salvarea sporturilor selectate
   const saveSelectedSports = async (sports) => {
     try {
       setIsLoading(true);
+      setError(null);
       const token = localStorage.getItem("token");
-      if (!token || !user) return;
+      if (!token || !user) throw new Error("Not authenticated");
 
-      await axios.post(
+      const response = await axios.post(
         "http://localhost:3008/user/sports",
         { sports },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      // Update local state only after successful save
+      setSelectedSports(sports);
+      return response.data;
     } catch (err) {
-      setError(err.message);
+      console.error("Error saving sports:", err);
+      setError(err.response?.data?.message || err.message);
       throw err;
     } finally {
       setIsLoading(false);

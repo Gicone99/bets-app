@@ -1,34 +1,171 @@
 import React, { useState, useContext, useEffect } from "react";
 import { SportsContext } from "../context/SportsContext";
 import { UserContext } from "../context/UserContext";
+import { FaFutbol, FaBasketballBall } from "react-icons/fa";
+import {
+  MdOutlineSportsHandball,
+  MdOutlineSportsRugby,
+  MdOutlineSportsMartialArts,
+  MdSportsTennis,
+  MdSportsMotorsports,
+  MdSportsGymnastics,
+} from "react-icons/md";
+import {
+  GiHockey,
+  GiVolleyballBall,
+  GiBaseballBat,
+  GiAmericanFootballBall,
+  GiCricketBat,
+  GiBoxingGlove,
+  GiPingPongBat,
+  GiTennisRacket,
+  GiPoolTriangle,
+  GiDart,
+  GiGamepad,
+  GiCycling,
+  GiGolfFlag,
+} from "react-icons/gi";
 
 const Sports = () => {
-  const { selectedSports, setSelectedSports, isLoading, error } =
-    useContext(SportsContext);
+  const {
+    selectedSports,
+    setSelectedSports,
+    saveSelectedSports,
+    isLoading,
+    error,
+  } = useContext(SportsContext);
   const { user } = useContext(UserContext);
+  const [localError, setLocalError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
 
-  // Lista completă de sporturi disponibile
+  // Lista completă de sporturi disponibile cu icoane
   const allSports = [
-    { id: 1, name: "Soccer", category: "Popular" },
-    { id: 2, name: "Basketball", category: "Popular" },
-    { id: 3, name: "Tennis", category: "Popular" },
-    { id: 4, name: "Ice Hockey", category: "Popular" },
-    { id: 5, name: "Handball", category: "Popular" },
-    { id: 6, name: "Volleyball", category: "Popular" },
-    { id: 7, name: "Baseball", category: "American" },
-    { id: 8, name: "American Football", category: "American" },
-    { id: 9, name: "Cricket", category: "International" },
-    { id: 10, name: "Rugby Union", category: "International" },
-    { id: 11, name: "Rugby League", category: "International" },
-    { id: 12, name: "Boxing", category: "Fighting" },
-    { id: 13, name: "MMA", category: "Fighting" },
-    { id: 14, name: "Table Tennis", category: "Other" },
-    { id: 15, name: "Badminton", category: "Other" },
-    { id: 16, name: "Snooker", category: "Other" },
-    { id: 17, name: "Darts", category: "Other" },
-    { id: 18, name: "Esports", category: "Virtual" },
-    { id: 19, name: "Cycling", category: "Other" },
-    { id: 20, name: "Golf", category: "Other" },
+    {
+      id: 1,
+      name: "Football",
+      category: "Popular",
+      icon: <FaFutbol className="mr-2" />,
+    },
+    {
+      id: 2,
+      name: "Basketball",
+      category: "Popular",
+      icon: <FaBasketballBall className="mr-2" />,
+    },
+    {
+      id: 3,
+      name: "Tennis",
+      category: "Popular",
+      icon: <MdSportsTennis className="mr-2" />,
+    },
+    {
+      id: 4,
+      name: "Hockey",
+      category: "Popular",
+      icon: <GiHockey className="mr-2" />,
+    },
+    {
+      id: 5,
+      name: "Handball",
+      category: "Popular",
+      icon: <MdOutlineSportsHandball className="mr-2" />,
+    },
+    {
+      id: 6,
+      name: "Volleyball",
+      category: "Popular",
+      icon: <GiVolleyballBall className="mr-2" />,
+    },
+    {
+      id: 7,
+      name: "Baseball",
+      category: "International",
+      icon: <GiBaseballBat className="mr-2" />,
+    },
+    {
+      id: 8,
+      name: "American Football",
+      category: "International",
+      icon: <GiAmericanFootballBall className="mr-2" />,
+    },
+    {
+      id: 9,
+      name: "Cricket",
+      category: "International",
+      icon: <GiCricketBat className="mr-2" />,
+    },
+    {
+      id: 10,
+      name: "Motorsport",
+      category: "International",
+      icon: <MdSportsMotorsports className="mr-2" />,
+    },
+    {
+      id: 11,
+      name: "Rugby",
+      category: "International",
+      icon: <MdOutlineSportsRugby className="mr-2" />,
+    },
+    {
+      id: 12,
+      name: "Other Sports",
+      category: "International",
+      icon: <MdSportsGymnastics className="mr-2" />,
+    },
+    {
+      id: 13,
+      name: "Boxing",
+      category: "Fighting",
+      icon: <GiBoxingGlove className="mr-2" />,
+    },
+    {
+      id: 14,
+      name: "MMA",
+      category: "Fighting",
+      icon: <MdOutlineSportsMartialArts className="mr-2" />,
+    },
+    {
+      id: 15,
+      name: "Table Tennis",
+      category: "Other",
+      icon: <GiPingPongBat className="mr-2" />,
+    },
+    {
+      id: 16,
+      name: "Badminton",
+      category: "Other",
+      icon: <GiTennisRacket className="mr-2" />,
+    },
+    {
+      id: 17,
+      name: "Snooker",
+      category: "Other",
+      icon: <GiPoolTriangle className="mr-2" />,
+    },
+    {
+      id: 18,
+      name: "Darts",
+      category: "Other",
+      icon: <GiDart className="mr-2" />,
+    },
+    {
+      id: 19,
+      name: "Esports",
+      category: "Virtual",
+      icon: <GiGamepad className="mr-2" />,
+    },
+    {
+      id: 20,
+      name: "Cycling",
+      category: "Other",
+      icon: <GiCycling className="mr-2" />,
+    },
+    {
+      id: 21,
+      name: "Golf",
+      category: "Other",
+      icon: <GiGolfFlag className="mr-2" />,
+    },
   ];
 
   // Grupează sporturile pe categorii
@@ -50,14 +187,33 @@ const Sports = () => {
     });
   };
 
-  const saveSelectedSports = async () => {
+  const handleSave = async () => {
     try {
-      console.log("Selected sports:", selectedSports);
-      alert("Sports preferences saved successfully!");
+      setLocalError(null);
+      const result = await saveSelectedSports(selectedSports);
+      setSuccessMessage("Sports preferences saved successfully!");
+      setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err) {
-      console.error("Error saving sports:", err);
+      setLocalError(err.message);
     }
   };
+
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto bg-gradient-to-b from-black via-gray-900 to-gray-900 shadow-xl rounded-2xl p-8 text-center">
+        <h1 className="text-3xl font-semibold mb-6 text-green-400">Sports</h1>
+        <p className="text-white mb-4">
+          You need to be logged in to select sports
+        </p>
+        <a
+          href="/login"
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg"
+        >
+          Go to Login
+        </a>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto bg-gradient-to-b from-black via-gray-900 to-gray-900 shadow-xl rounded-2xl p-8">
@@ -68,9 +224,15 @@ const Sports = () => {
         Choose which sports you want to see in your app
       </p>
 
-      {error && (
+      {(error || localError) && (
         <div className="mb-4 p-2 bg-red-500 text-white rounded text-center">
-          {error}
+          {error || localError}
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="mb-4 p-2 bg-green-500 text-white rounded text-center">
+          {successMessage}
         </div>
       )}
 
@@ -96,9 +258,14 @@ const Sports = () => {
                   onClick={() => toggleSportSelection(sport.id)}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-medium text-white capitalize">
-                      {sport.name}
-                    </span>
+                    <div className="flex items-center">
+                      <span className="text-lg text-green-400">
+                        {sport.icon}
+                      </span>
+                      <span className="text-lg font-medium text-white capitalize">
+                        {sport.name}
+                      </span>
+                    </div>
                     <div
                       className={`w-5 h-5 rounded border-2 ${
                         selectedSports.includes(sport.id)
@@ -120,13 +287,13 @@ const Sports = () => {
 
       <div className="mt-8 flex justify-center">
         <button
-          onClick={saveSelectedSports}
+          onClick={handleSave}
           disabled={isLoading}
           className={`bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg focus:outline-none ${
             isLoading ? "opacity-50 cursor-not-allowed" : ""
           }`}
         >
-          Save Preferences
+          {isLoading ? "Saving..." : "Save Preferences"}
         </button>
       </div>
     </div>

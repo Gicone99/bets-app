@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { BalanceContext } from "../context/BalanceContext";
 import { ProjectsContext } from "../context/ProjectsContext";
 import { UserContext } from "../context/UserContext";
+import { SportsContext } from "../context/SportsContext";
 
 const EditBetPopup = ({
   onClose,
@@ -102,26 +103,52 @@ const EditBetPopup = ({
   );
 };
 
-// Popup pentru adăugarea/editarera unei piețe de pariu
 const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
   const [bettingMarket, setBettingMarket] = useState(
     existingMarket?.title || ""
   );
   const [status, setStatus] = useState(existingMarket?.status || "PENDING");
   const [odds, setOdds] = useState(existingMarket?.odds || "");
+  const [selectedSport, setSelectedSport] = useState(
+    existingMarket?.sport || ""
+  );
+  const { selectedSports } = useContext(SportsContext);
+
+  const availableSports = [
+    { id: 1, name: "Football" },
+    { id: 2, name: "Basketball" },
+    { id: 3, name: "Tennis" },
+    { id: 4, name: "Hockey" },
+    { id: 5, name: "Handball" },
+    { id: 6, name: "Volleyball" },
+    { id: 7, name: "Baseball" },
+    { id: 8, name: "American Football" },
+    { id: 9, name: "Cricket" },
+    { id: 10, name: "Motorsport" },
+    { id: 11, name: "Rugby" },
+    { id: 11, name: "Other Sports" },
+    { id: 13, name: "Boxing" },
+    { id: 14, name: "MMA" },
+    { id: 15, name: "Table Tennis" },
+    { id: 16, name: "Badminton" },
+    { id: 17, name: "Snooker" },
+    { id: 18, name: "Darts" },
+    { id: 19, name: "Esports" },
+    { id: 20, name: "Cycling" },
+    { id: 21, name: "Golf" },
+  ].filter((sport) => selectedSports.includes(sport.id));
 
   const handleSubmit = () => {
-    if (!bettingMarket.trim() || !odds.trim()) {
+    if (!bettingMarket.trim() || !odds.trim() || !selectedSport) {
       alert("Please fill all fields");
       return;
     }
-    onSubmit(betId, marketId, bettingMarket, status, odds);
+    onSubmit(betId, marketId, bettingMarket, status, odds, selectedSport);
     onClose();
   };
 
   const handlebettingMarketChange = (e) => {
     const newbettingMarket = e.target.value;
-    // Limitează la 50 de caractere
     if (newbettingMarket.length <= 50) {
       setBettingMarket(newbettingMarket);
     }
@@ -129,11 +156,7 @@ const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
 
   const handleOddsChange = (e) => {
     let newOdds = e.target.value;
-
-    // Înlocuiește virgula cu punct
     newOdds = newOdds.replace(",", ".");
-
-    // Permite doar numere și până la 2 zecimale
     const regex = /^\d*\.?\d{0,2}$/;
     if (regex.test(newOdds)) {
       setOdds(newOdds);
@@ -143,6 +166,24 @@ const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-80 z-50 text-center">
       <div className="bg-gradient-to-b from-gray-900 via-black to-gray-900 rounded-lg shadow-2xl p-6 w-96">
+        <div className="mb-6">
+          <label className="block text-xl font-bold text-green-400 mb-2">
+            Sport
+          </label>
+          <select
+            value={selectedSport}
+            onChange={(e) => setSelectedSport(e.target.value)}
+            className="w-full p-3 border-2 border-green-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-800 text-white"
+          >
+            <option value="">Select a sport</option>
+            {availableSports.map((sport) => (
+              <option key={sport.id} value={sport.name}>
+                {sport.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="mb-6">
           <label className="block text-xl font-bold text-green-400 mb-2">
             Betting Market
@@ -204,7 +245,6 @@ const Popup = ({ onClose, onSubmit, betId, marketId, existingMarket }) => {
   );
 };
 
-// Componenta principală Calendar
 const Calendar = () => {
   const [betsByDate, setBetsByDate] = useState({});
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -218,6 +258,7 @@ const Calendar = () => {
   const { balance, setBalance } = useContext(BalanceContext);
   const { user, setUser } = useContext(UserContext);
   const { projects, setProjects } = useContext(ProjectsContext);
+  const { selectedSports } = useContext(SportsContext);
   const [selectedProject, setSelectedProject] = useState(null);
 
   const navigate = useNavigate();
@@ -228,7 +269,6 @@ const Calendar = () => {
   const handleUserIconClick = () => navigate("/profile");
   const handleMatchesClick = () => navigate("/livematches");
 
-  // Încărcăm pariurile din localStorage
   useEffect(() => {
     const storedBets = JSON.parse(localStorage.getItem("betsByDate"));
     if (storedBets) {
@@ -236,14 +276,12 @@ const Calendar = () => {
     }
   }, []);
 
-  // Salvăm pariurile la fiecare modificare
   useEffect(() => {
     if (Object.keys(betsByDate).length > 0) {
       localStorage.setItem("betsByDate", JSON.stringify(betsByDate));
     }
   }, [betsByDate]);
 
-  // Încărcăm proiectele din localStorage
   useEffect(() => {
     const storedProjects = JSON.parse(localStorage.getItem("projects"));
     if (storedProjects) {
@@ -251,7 +289,6 @@ const Calendar = () => {
     }
   }, []);
 
-  // Salvăm proiectele la fiecare modificare
   useEffect(() => {
     localStorage.setItem("projects", JSON.stringify(projects));
   }, [projects]);
@@ -299,19 +336,16 @@ const Calendar = () => {
         return prev;
       }
 
-      // Verificăm dacă stake-ul este 0
       if (parseFloat(betToUpdate.stake) === 0) {
         alert("Stake must not be 0!");
         return prev;
       }
 
-      // Verificăm dacă există cel puțin un betting market
       if (betToUpdate.bettingMarkets.length === 0) {
         alert("Betting market must not be empty!");
         return prev;
       }
 
-      // Verificăm dacă există cel puțin un betting market cu statusul "PENDING"
       const hasPendingMarkets = betToUpdate.bettingMarkets.some(
         (market) => market.status === "PENDING"
       );
@@ -320,7 +354,6 @@ const Calendar = () => {
         return prev;
       }
 
-      // Calculăm statusul, total odds și winnings
       const updatedStatus = calculateBetStatus(betToUpdate.bettingMarkets);
       const totalOdds = betToUpdate.bettingMarkets.reduce((acc, market) => {
         const odds = parseFloat(market.odds);
@@ -335,12 +368,10 @@ const Calendar = () => {
           ? stake * totalOdds
           : 0;
 
-      // Actualizăm balanța doar dacă pariul este câștigător și nu a fost deja procesat
       if (updatedStatus === "WON" && !betToUpdate.isReady) {
         setBalance((prevBalance) => prevBalance + winnings);
       }
 
-      // Actualizăm starea bet-ului
       betToUpdate.isReady = true;
       betToUpdate.updatedStatus = updatedStatus;
       betToUpdate.totalOdds = totalOdds;
@@ -350,25 +381,22 @@ const Calendar = () => {
     });
   };
 
-  // Deschide popup-ul pentru a adăuga/edita o piață de pariu
   const editBettingMarket = (betId, marketId) => {
-    // const bet = betsByDate[selectedDate].find((bet) => bet.id === betId);
-    // const market = bet.bettingMarkets.find((market) => market.id === marketId);
     setPopupBetId(betId);
     setPopupMarketId(marketId);
     setShowPopup(true);
   };
 
   const getProfitLossColor = (profitLoss) => {
-    if (profitLoss > 0) return "text-green-500"; // Verde pentru profit
-    if (profitLoss < 0) return "text-red-500"; // Roșu pentru pierdere
-    return "text-gray-400"; // Gri pentru nici profit, nici pierdere
+    if (profitLoss > 0) return "text-green-500";
+    if (profitLoss < 0) return "text-red-500";
+    return "text-gray-400";
   };
 
   const getProfitLossLabel = (profitLoss) => {
-    if (profitLoss > 0) return "Today's Profit"; // Profit
-    if (profitLoss < 0) return "Today's Loss"; // Loss
-    return "Today's Result"; // Default (no profit, no loss)
+    if (profitLoss > 0) return "Today's Profit";
+    if (profitLoss < 0) return "Today's Loss";
+    return "Today's Result";
   };
 
   const calculateDailyProfitLoss = (date) => {
@@ -388,7 +416,6 @@ const Calendar = () => {
     return totalProfitLoss;
   };
 
-  // Adăugarea unui nou pariu cu actualizarea balansului
   const addBet = () => {
     if (!newBetTitle.trim() || !selectedDate || !selectedProject) return;
 
@@ -397,11 +424,11 @@ const Calendar = () => {
       title: newBetTitle,
       status: "PENDING",
       bettingMarkets: [],
-      stake: 0, // Stake-ul inițial este 0
-      isReady: false, // Starea inițială pentru butonul "Close Bet"
-      updatedStatus: "PENDING", // Statusul actualizat
-      totalOdds: 1, // Total odds inițial
-      winnings: 0, // Câștiguri inițiale
+      stake: 0,
+      isReady: false,
+      updatedStatus: "PENDING",
+      totalOdds: 1,
+      winnings: 0,
     };
 
     setBetsByDate((prev) => ({
@@ -410,16 +437,16 @@ const Calendar = () => {
     }));
 
     setNewBetTitle("");
-    setSelectedProject(null); // Resetează selecția proiectului după adăugarea pariului
+    setSelectedProject(null);
   };
 
-  // Salvarea unei piețe de pariu cu actualizarea balansului
   const submitBettingMarket = (
     betId,
     marketId,
     bettingMarket,
     status,
-    odds
+    odds,
+    sport
   ) => {
     setBetsByDate((prev) => {
       const updatedBets = { ...prev };
@@ -428,19 +455,18 @@ const Calendar = () => {
         updatedBets[date] = updatedBets[date].map((bet) => {
           if (bet.id === betId) {
             if (marketId) {
-              // Actualizare piață de pariu existentă
               bet.bettingMarkets = bet.bettingMarkets.map((market) =>
                 market.id === marketId
-                  ? { ...market, title: bettingMarket, status, odds }
+                  ? { ...market, title: bettingMarket, status, odds, sport }
                   : market
               );
             } else {
-              // Adăugare piață de pariu nouă
               bet.bettingMarkets.push({
                 id: Date.now().toString(),
                 title: bettingMarket,
                 status,
                 odds,
+                sport,
               });
             }
           }
@@ -452,7 +478,6 @@ const Calendar = () => {
     });
   };
 
-  // Actualizarea titlului și balansului când se editează un pariu
   const editBetTitle = (betId, newTitle, newStake) => {
     setBetsByDate((prev) => ({
       ...prev,
@@ -460,17 +485,14 @@ const Calendar = () => {
         if (bet.id === betId) {
           const currentStake = bet.stake || 0;
 
-          // Verificăm dacă noua valoare a stake-ului este validă
           if (newStake !== undefined) {
             const stakeDifference = newStake - currentStake;
 
-            // Verificăm dacă balanța este suficientă
             if (balance - stakeDifference < 0) {
               alert("Insufficient funds! Your balance is " + balance);
-              return bet; // Nu actualizăm dacă fondurile sunt insuficiente
+              return bet;
             }
 
-            // Actualizăm balanța
             setBalance((prevBalance) => prevBalance - stakeDifference);
             bet.stake = newStake;
           }
@@ -482,9 +504,7 @@ const Calendar = () => {
     }));
   };
 
-  // Ștergerea unui pariu
   const deleteBet = (betId) => {
-    // Obținem lista de pariuri pentru data selectată
     const betList = betsByDate[selectedDate] || [];
     const betToDelete = betList.find((bet) => bet.id === betId);
 
@@ -494,30 +514,26 @@ const Calendar = () => {
     }
 
     const stakeToAddBack = parseFloat(betToDelete.stake) || 0;
-    const winningsToSubtract = parseFloat(betToDelete.winnings) || 0; // Obținem câștigurile bet-ului
+    const winningsToSubtract = parseFloat(betToDelete.winnings) || 0;
 
-    // Verificăm dacă balanța ar deveni negativă după ștergere
     const newBalance = balance + stakeToAddBack - winningsToSubtract;
     if (newBalance < 0) {
       alert(
         "Operation not possible due to negative balance! Your balance cannot be " +
           newBalance
       );
-      return; // Nu continuăm dacă balanța ar deveni negativă
+      return;
     }
 
-    // Ștergem pariul din lista de bets
     setBetsByDate((prev) => {
       const updatedBets = { ...prev };
       updatedBets[selectedDate] = betList.filter((bet) => bet.id !== betId);
       return updatedBets;
     });
 
-    // Actualizăm balanța
     setBalance(newBalance);
   };
 
-  // Ștergerea unei piețe de pariu
   const deleteBettingMarket = (betId, marketId) => {
     setBetsByDate((prev) => {
       const updatedBets = { ...prev };
@@ -535,14 +551,12 @@ const Calendar = () => {
     });
   };
 
-  // Mergi la luna precedentă
   const goToPreviousMonth = () => {
     setCurrentDate(
       (prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1)
     );
   };
 
-  // Mergi la luna următoare
   const goToNextMonth = () => {
     setCurrentDate(
       (prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1)
@@ -553,7 +567,7 @@ const Calendar = () => {
 
   const calculateBetStatus = (bettingMarkets) => {
     if (!bettingMarkets.length) {
-      return "PENDING"; // biletele fara evenimente sunt în mod implicit "PENDING"
+      return "PENDING";
     }
     if (bettingMarkets.some((market) => market.status === "LOST")) {
       return "LOST";
@@ -570,7 +584,6 @@ const Calendar = () => {
   return (
     <div className="max-w-4xl mx-auto bg-gradient-to-b from-black via-gray-900 to-gray-900 shadow-xl rounded-2xl p-8">
       <div className="flex justify-between items-center mb-6">
-        {/* Butoanele din stânga */}
         <div className="flex space-x-4">
           <button
             onClick={handleHomeClick}
@@ -603,7 +616,6 @@ const Calendar = () => {
             <FaFutbol className="mr-2" /> Live Matches
           </button>
 
-          {/* Butonul pentru User și Balance în dreapta */}
           <button
             onClick={handleUserIconClick}
             className="flex items-center text-green-400 hover:text-green-500 transition duration-200"
@@ -691,12 +703,6 @@ const Calendar = () => {
                 const project = projects.find(
                   (p) => p.id.toString() === projectId
                 );
-                console.log(
-                  "Selected project ID:",
-                  projectId,
-                  "Project:",
-                  project
-                ); // Debug
                 setSelectedProject(project || null);
                 setNewBetTitle(project?.name || "");
               }}
@@ -813,6 +819,13 @@ const Calendar = () => {
                               >
                                 {market.status}
                               </p>
+                            </div>
+
+                            <div className="flex-1 text-center">
+                              <label className="block font-semibold text-gray-500">
+                                Sport
+                              </label>
+                              <p className="text-gray-300">{market.sport}</p>
                             </div>
 
                             <div
@@ -986,7 +999,7 @@ const Calendar = () => {
             betsByDate[selectedDate]?.find((bet) => bet.id === editBetId)?.stake
           }
           balance={balance}
-          projects={projects} // Trimitem lista de proiecte
+          projects={projects}
         />
       )}
       {calculateDailyProfitLoss(selectedDate) !== 0 && (

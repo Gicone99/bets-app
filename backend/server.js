@@ -373,12 +373,12 @@ app.get("/projects", authenticateJWT, (req, res) => {
   const username = req.user.username;
 
   const query = `
-    SELECT p.id, p.name 
-    FROM projects p
-    JOIN users u ON p.user_id = u.id
-    WHERE u.username = ?
-    ORDER BY p.name ASC
-  `;
+      SELECT p.id, p.name 
+      FROM projects p
+      JOIN users u ON p.user_id = u.id
+      WHERE u.username = ?
+      ORDER BY p.name ASC
+    `;
 
   db.query(query, [username], (err, results) => {
     if (err) {
@@ -446,11 +446,11 @@ app.put("/projects/:id", authenticateJWT, (req, res) => {
 
   // Verify project belongs to user and update
   const query = `
-    UPDATE projects p
-    JOIN users u ON p.user_id = u.id
-    SET p.name = ?
-    WHERE p.id = ? AND u.username = ?
-  `;
+      UPDATE projects p
+      JOIN users u ON p.user_id = u.id
+      SET p.name = ?
+      WHERE p.id = ? AND u.username = ?
+    `;
 
   db.query(query, [name, id, username], (err, result) => {
     if (err) {
@@ -474,10 +474,10 @@ app.delete("/projects/:id", authenticateJWT, (req, res) => {
 
   // Verify project belongs to user and delete
   const query = `
-    DELETE p FROM projects p
-    JOIN users u ON p.user_id = u.id
-    WHERE p.id = ? AND u.username = ?
-  `;
+      DELETE p FROM projects p
+      JOIN users u ON p.user_id = u.id
+      WHERE p.id = ? AND u.username = ?
+    `;
 
   db.query(query, [id, username], (err, result) => {
     if (err) {
@@ -519,6 +519,90 @@ const fetchProjects = async () => {
     setIsLoading(false);
   }
 };
+
+//Sports
+// Get user's selected sports
+app.get("/user/sports", authenticateJWT, (req, res) => {
+  const username = req.user.username;
+
+  const query = `
+    SELECT sports FROM sports 
+    JOIN users ON sports.user_id = users.id 
+    WHERE users.username = ?
+  `;
+
+  db.query(query, [username], (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err });
+    }
+
+    if (results.length === 0) {
+      return res.json({ selectedSports: [] });
+    }
+
+    // Parse the JSON string from database
+    const sports = JSON.parse(results[0].sports || "[]");
+    res.json({ selectedSports: sports });
+  });
+});
+
+// Save user's selected sports
+app.post("/user/sports", authenticateJWT, (req, res) => {
+  const { sports } = req.body;
+  const username = req.user.username;
+
+  if (!Array.isArray(sports)) {
+    return res.status(400).json({ message: "Sports should be an array" });
+  }
+
+  // First get user ID
+  const userQuery = "SELECT id FROM users WHERE username = ?";
+  db.query(userQuery, [username], (err, userResults) => {
+    if (err) {
+      return res.status(500).json({ message: "Database error", error: err });
+    }
+
+    if (userResults.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const userId = userResults[0].id;
+    const sportsJson = JSON.stringify(sports);
+
+    // Check if user already has sports saved
+    const checkQuery = "SELECT * FROM sports WHERE user_id = ?";
+    db.query(checkQuery, [userId], (err, checkResults) => {
+      if (err) {
+        return res.status(500).json({ message: "Database error", error: err });
+      }
+
+      if (checkResults.length > 0) {
+        // Update existing record
+        const updateQuery = "UPDATE sports SET sports = ? WHERE user_id = ?";
+        db.query(updateQuery, [sportsJson, userId], (err, result) => {
+          if (err) {
+            return res
+              .status(500)
+              .json({ message: "Error updating sports", error: err });
+          }
+          res.json({ message: "Sports preferences updated successfully" });
+        });
+      } else {
+        // Insert new record
+        const insertQuery =
+          "INSERT INTO sports (user_id, sports) VALUES (?, ?)";
+        db.query(insertQuery, [userId, sportsJson], (err, result) => {
+          if (err) {
+            return res
+              .status(500)
+              .json({ message: "Error saving sports", error: err });
+          }
+          res.json({ message: "Sports preferences saved successfully" });
+        });
+      }
+    });
+  });
+});
 
 // Start the server
 app.listen(port, () => {

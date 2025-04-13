@@ -11,11 +11,7 @@ import {
   FaKey,
   FaSignOutAlt,
   FaGlobe,
-  FaSignInAlt,
-  FaUserPlus,
   FaHome,
-  FaProjectDiagram,
-  FaCamera,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -24,16 +20,11 @@ const Profile = () => {
   const { setBalance } = useContext(BalanceContext);
   const { user, setUser } = useContext(UserContext);
   const navigate = useNavigate();
-  const fileInputRef = useRef(null);
 
   // Navigation handlers
   const navigationHandlers = {
-    login: () => navigate("/login"),
     home: () => navigate("/"),
-    register: () => navigate("/register"),
     logout: () => handleLogout(),
-    history: () => navigate("/history"),
-    projects: () => navigate("/projects"),
   };
 
   // State for transactions
@@ -59,6 +50,7 @@ const Profile = () => {
     newPassword: "",
     confirmPassword: "",
     email: user?.email || "",
+    language: "english",
   });
 
   // Transaction history state
@@ -87,7 +79,6 @@ const Profile = () => {
   // Load transactions on component mount
   useEffect(() => {
     if (user) {
-      // Mock transaction data - replace with actual API call
       const mockTransactions = [
         {
           id: 1,
@@ -106,30 +97,6 @@ const Profile = () => {
     }
   }, [user]);
 
-  // Handle profile picture upload
-  const handleProfilePictureChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    try {
-      // In a real app, you would upload the file to your server here
-      // For demo purposes, we'll just create a local URL
-      const imageUrl = URL.createObjectURL(file);
-
-      // Update user context with new image
-      setUser({ ...user, profilePicture: imageUrl });
-
-      // Here you would typically make an API call to save the image URL to the user's profile
-      // await axios.post('/api/update-profile-picture', { imageUrl });
-
-      setSuccess("Profile picture updated successfully!");
-      setTimeout(() => setSuccess(""), 3000);
-    } catch (err) {
-      setError("Failed to update profile picture");
-      console.error(err);
-    }
-  };
-
   // Handle logout
   const handleLogout = () => {
     if (localStorage.getItem("token")) {
@@ -145,7 +112,7 @@ const Profile = () => {
         )
         .then(() => {
           localStorage.removeItem("token");
-          navigate("/login");
+          navigate("/");
         })
         .catch((err) => {
           console.error("Logout error:", err);
@@ -196,7 +163,6 @@ const Profile = () => {
 
       setBalance(response.data.newBalance);
 
-      // Add transaction to history
       const newTransaction = {
         id: transactions.length + 1,
         date: new Date().toLocaleDateString(),
@@ -260,20 +226,18 @@ const Profile = () => {
   // Settings functions
   const handleSettingsChange = (e) => {
     const { name, value } = e.target;
-    setSettings({
-      ...settings,
+    setSettings((prev) => ({
+      ...prev,
       [name]: value,
-    });
+    }));
   };
 
   const handleSaveSettings = async () => {
     try {
-      // Here you would call your backend API to save settings
-      // This is just a mock implementation
       const updatedUser = {
         ...user,
         email: settings.email,
-        language: user.language, // This would be updated from the language selector
+        language: settings.language,
       };
 
       setUser(updatedUser);
@@ -286,7 +250,8 @@ const Profile = () => {
   };
 
   const changeLanguage = (lang) => {
-    setUser({ ...user, language: lang });
+    setSettings((prev) => ({ ...prev, language: lang }));
+    setUser((prev) => ({ ...prev, language: lang }));
     setSuccess(`Language changed to ${lang}`);
     setTimeout(() => setSuccess(""), 3000);
   };
@@ -556,42 +521,106 @@ const Profile = () => {
 
   // History Component
   const HistorySection = () => {
+    // Formatare data pentru expirare abonament
+    const formatSubscriptionDate = (dateString) => {
+      const options = {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      };
+      return new Date(dateString).toLocaleDateString("en-US", options);
+    };
+
     return (
       <div className="bg-gray-800 p-6 rounded-xl shadow-lg">
-        <h3 className="text-2xl font-bold text-white mb-6">
-          Transaction History
-        </h3>
+        <h3 className="text-2xl font-bold text-white mb-6">Account History</h3>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-700">
-                <th className="text-left py-3 text-gray-400">Date</th>
-                <th className="text-left py-3 text-gray-400">Description</th>
-                <th className="text-right py-3 text-gray-400">Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((transaction) => (
-                <tr
-                  key={transaction.id}
-                  className="border-b border-gray-700 hover:bg-gray-700"
-                >
-                  <td className="py-3 text-gray-300">{transaction.date}</td>
-                  <td className="py-3 text-white">{transaction.description}</td>
-                  <td
-                    className={`py-3 text-right font-medium ${
-                      transaction.amount.startsWith("+")
-                        ? "text-green-400"
-                        : "text-red-400"
-                    }`}
-                  >
-                    {transaction.amount}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="space-y-4">
+          {/* Card special pentru crearea contului */}
+          <div className="bg-gradient-to-r bg-gray-700 p-5 rounded-xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center mb-2">
+                  <FaUserCog className=" text-green-400 mr-2 text-xl" />
+                  <h4 className="text-lg font-bold text-white">
+                    Account Created
+                  </h4>
+                </div>
+                <p className="text-blue-100">
+                  {new Date(user?.createdAt || Date.now()).toLocaleDateString(
+                    "en-US",
+                    {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }
+                  )}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-bold text-white mb-1">
+                  Subscription expires:
+                </p>
+                <p className=" text-green-400 font-medium">
+                  {subscription.end_date
+                    ? formatSubscriptionDate(subscription.end_date)
+                    : "N/A"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Istoric tranzacții */}
+          <div className="bg-gray-700 p-4 rounded-lg">
+            <h4 className="text-lg font-bold text-white mb-4 flex items-center">
+              <FaHistory className="mr-2 text-green-400" />
+              Transaction History
+            </h4>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-600">
+                    <th className="text-left py-3 text-gray-300">Date</th>
+                    <th className="text-left py-3 text-gray-300">
+                      Description
+                    </th>
+                    <th className="text-right py-3 text-gray-300">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions
+                    .filter((t) => t.id !== 1)
+                    .map((transaction) => (
+                      <tr
+                        key={transaction.id}
+                        className="border-b border-gray-600 hover:bg-gray-600"
+                      >
+                        <td className="py-3 text-gray-300">
+                          {transaction.date}
+                        </td>
+                        <td className="py-3 text-white">
+                          {transaction.description}
+                        </td>
+                        <td
+                          className={`py-3 text-right font-medium ${
+                            transaction.amount.startsWith("+")
+                              ? "text-green-400"
+                              : "text-red-400"
+                          }`}
+                        >
+                          {transaction.amount}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -599,59 +628,47 @@ const Profile = () => {
 
   // Settings Component
   const SettingsSection = () => {
-    const [emailEditable, setEmailEditable] = useState(false);
+    // Folosim useRef pentru a stoca valorile temporare
+    const emailRef = useRef(user?.email || "");
+    const currentPasswordRef = useRef("");
+    const newPasswordRef = useRef("");
+    const confirmPasswordRef = useRef("");
+
+    // Actualizăm ref-urile când user-ul se schimbă
+    useEffect(() => {
+      emailRef.current = user?.email || "";
+    }, [user]);
+
+    const handleSaveSettings = async () => {
+      try {
+        const updatedSettings = {
+          email: emailRef.current,
+          currentPassword: currentPasswordRef.current,
+          newPassword: newPasswordRef.current,
+          confirmPassword: confirmPasswordRef.current,
+          language: settings.language,
+        };
+
+        const updatedUser = {
+          ...user,
+          email: updatedSettings.email,
+          language: updatedSettings.language,
+        };
+
+        setUser(updatedUser);
+        setSuccess("Settings saved successfully!");
+        setTimeout(() => setSuccess(""), 3000);
+      } catch (err) {
+        setError("Failed to save settings");
+        console.error(err);
+      }
+    };
 
     return (
       <div className="bg-gray-800 p-6 rounded-xl shadow-lg">
         <h3 className="text-2xl font-bold text-white mb-6">Account Settings</h3>
 
         <div className="space-y-6">
-          {/* Profile Picture */}
-          <div className="bg-black bg-opacity-30 p-4 rounded-lg">
-            <h4 className="text-xl font-bold text-white mb-4 flex items-center">
-              <FaUserCog className="mr-2 text-green-400" />
-              Profile Picture
-            </h4>
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <div className="w-20 h-20 rounded-full bg-gray-700 overflow-hidden flex items-center justify-center">
-                  {user?.profilePicture ? (
-                    <img
-                      src={user.profilePicture}
-                      alt="Profile"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-2xl font-bold text-green-400">
-                      {user?.username?.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </div>
-                <button
-                  onClick={() => fileInputRef.current.click()}
-                  className="absolute bottom-0 right-0 bg-green-600 rounded-full p-2 hover:bg-green-700 transition"
-                >
-                  <FaCamera className="text-white" />
-                </button>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleProfilePictureChange}
-                  accept="image/*"
-                  className="hidden"
-                />
-              </div>
-              <div>
-                <p className="text-gray-300">
-                  Click the camera icon to upload a new profile picture
-                </p>
-                <p className="text-gray-400 text-sm">
-                  Recommended size: 200x200 pixels
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* Account Information */}
           <div className="bg-black bg-opacity-30 p-4 rounded-lg">
             <h4 className="text-xl font-bold text-white mb-4 flex items-center">
@@ -668,29 +685,15 @@ const Profile = () => {
               </div>
 
               <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="block text-gray-400">Email Address</label>
-                  <button
-                    onClick={() => setEmailEditable(!emailEditable)}
-                    className="text-sm text-green-400 hover:text-green-300"
-                  >
-                    {emailEditable ? "Cancel" : "Change Email"}
-                  </button>
-                </div>
-                {emailEditable ? (
-                  <input
-                    type="email"
-                    name="email"
-                    value={settings.email}
-                    onChange={handleSettingsChange}
-                    className="w-full bg-gray-700 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
-                    onBlur={() => setEmailEditable(false)}
-                  />
-                ) : (
-                  <div className="bg-gray-700 text-white p-3 rounded-lg">
-                    {user?.email}
-                  </div>
-                )}
+                <label className="block text-gray-400 mb-1">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  defaultValue={emailRef.current}
+                  onChange={(e) => (emailRef.current = e.target.value)}
+                  className="w-full bg-gray-700 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
+                />
               </div>
             </div>
           </div>
@@ -709,9 +712,10 @@ const Profile = () => {
                 </label>
                 <input
                   type="password"
-                  name="currentPassword"
-                  value={settings.currentPassword}
-                  onChange={handleSettingsChange}
+                  defaultValue={currentPasswordRef.current}
+                  onChange={(e) =>
+                    (currentPasswordRef.current = e.target.value)
+                  }
                   className="w-full bg-gray-700 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
                 />
               </div>
@@ -720,9 +724,8 @@ const Profile = () => {
                 <label className="block text-gray-400 mb-1">New Password</label>
                 <input
                   type="password"
-                  name="newPassword"
-                  value={settings.newPassword}
-                  onChange={handleSettingsChange}
+                  defaultValue={newPasswordRef.current}
+                  onChange={(e) => (newPasswordRef.current = e.target.value)}
                   className="w-full bg-gray-700 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
                 />
               </div>
@@ -733,9 +736,10 @@ const Profile = () => {
                 </label>
                 <input
                   type="password"
-                  name="confirmPassword"
-                  value={settings.confirmPassword}
-                  onChange={handleSettingsChange}
+                  defaultValue={confirmPasswordRef.current}
+                  onChange={(e) =>
+                    (confirmPasswordRef.current = e.target.value)
+                  }
                   className="w-full bg-gray-700 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
                 />
               </div>
@@ -753,14 +757,13 @@ const Profile = () => {
               <button
                 onClick={() => changeLanguage("english")}
                 className={`px-4 py-2 rounded-lg flex items-center ${
-                  user?.language === "english"
+                  (user?.language || "english") === "english"
                     ? "bg-green-600 text-white"
                     : "bg-gray-700 text-gray-300"
                 }`}
               >
                 <span className="mr-2">🇬🇧</span> English
               </button>
-
               <button
                 onClick={() => changeLanguage("german")}
                 className={`px-4 py-2 rounded-lg flex items-center ${
@@ -771,7 +774,6 @@ const Profile = () => {
               >
                 <span className="mr-2">🇩🇪</span> German
               </button>
-
               <button
                 onClick={() => changeLanguage("romanian")}
                 className={`px-4 py-2 rounded-lg flex items-center ${
@@ -815,47 +817,15 @@ const Profile = () => {
                 <FaHome className="mr-1" />
                 Home
               </button>
-              <button
-                onClick={navigationHandlers.projects}
-                className="text-gray-300 hover:text-green-400 transition px-3 py-1 rounded-lg flex items-center"
-              >
-                <FaProjectDiagram className="mr-1" />
-                Projects
-              </button>
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            {!user ? (
-              <>
-                <button
-                  onClick={navigationHandlers.login}
-                  className="text-gray-300 hover:text-green-400 transition px-3 py-1 rounded-lg flex items-center"
-                >
-                  <FaSignInAlt className="mr-1" />
-                  Login
-                </button>
-                <button
-                  onClick={navigationHandlers.register}
-                  className="text-gray-300 hover:text-green-400 transition px-3 py-1 rounded-lg flex items-center"
-                >
-                  <FaUserPlus className="mr-1" />
-                  Register
-                </button>
-              </>
-            ) : (
+            {user && (
               <>
                 <span className="font-medium">{user?.username}</span>
                 <div className="relative">
-                  <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center font-bold overflow-hidden">
-                    {user?.profilePicture ? (
-                      <img
-                        src={user.profilePicture}
-                        alt="Profile"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <span>{user?.username?.charAt(0).toUpperCase()}</span>
-                    )}
+                  <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center font-bold">
+                    <span>{user?.username?.charAt(0).toUpperCase()}</span>
                   </div>
                 </div>
                 <button
